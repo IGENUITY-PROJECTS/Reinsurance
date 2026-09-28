@@ -55,3 +55,5 @@ document.getElementById('forgotForm').addEventListener('submit', function() {
 </script>
 
 </x-layouts.auth>
+
+

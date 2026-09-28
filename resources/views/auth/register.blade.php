@@ -164,3 +164,5 @@ document.getElementById('registerForm').addEventListener('submit', function() {
 
 </x-layouts.auth>
 
+
+

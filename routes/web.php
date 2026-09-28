@@ -1,46 +1,37 @@
 <?php
-
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\SubmissionPreviewController;
 use App\Livewire\Admin\Access\Index as AccessManagement;
-use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\Users\Index as UserManagement;
+use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Client\Dashboard as ClientDashboard;
 use App\Livewire\Client\Profile\Edit as ClientProfile;
 use App\Livewire\Frontend\Home;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', Home::class)->name('home');
+Route::get('/dashboard', DashboardRedirectController::class)->middleware('auth')->name('dashboard');
 
-Route::middleware('auth')->group(function (): void {
-    Route::get('/dashboard', DashboardRedirectController::class)->name('dashboard');
-});
-
-Route::middleware(['auth', 'role_or_permission:super-admin|admin|view admin dashboard'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function (): void {
-        Route::get('/dashboard', AdminDashboard::class)->name('dashboard');
-        Route::get('/users', UserManagement::class)->middleware('can:manage users')->name('users.index');
-        Route::get('/access', AccessManagement::class)->middleware('can:manage roles')->name('access.index');
-    });
-
-Route::middleware(['auth', 'role:client'])
-    ->prefix('client')
-    ->name('client.')
-    ->group(function (): void {
-        Route::get('/dashboard', ClientDashboard::class)->name('dashboard');
-        Route::get('/profile', ClientProfile::class)->name('profile.edit');
-
-        foreach ([
-            'policies' => ['My Policies / Covers', 'Your company’s cover details and policy documents.', 'Records pending', 'Your policies will appear here', 'Policy records are not available in the portal yet.'],
-            'statements' => ['Statement of Account', 'Your company’s statements and account information.', 'Records pending', 'Your statements will appear here', 'Statements and downloads are not available in the portal yet.'],
-            'claims' => ['My Claims', 'A dedicated place for your company’s claims.', 'Coming soon', 'Claims submission is not open yet', 'Online claim submission and progress tracking will be available here. No claims can be submitted through this page yet.'],
-            'help' => ['Help & Feedback', 'A place for your questions, support requests, and suggestions.', 'Coming soon', 'We’re getting your help centre ready', 'Online requests are not available yet. Please use your usual Afro-Asian contact for assistance.'],
-        ] as $section => [$title, $description, $status, $emptyTitle, $emptyMessage]) {
-            Route::view('/'.$section, 'client-section', compact('section', 'title', 'description', 'status', 'emptyTitle', 'emptyMessage'))->name($section);
+foreach (['admin' => ['auth', 'role_or_permission:super-admin|admin|view admin dashboard'], 'client' => ['auth', 'role:client']] as $prefix => $middleware) {
+    Route::middleware($middleware)->prefix($prefix)->name($prefix.'.')->group(function () use ($prefix) {
+        Route::get('/dashboard', $prefix === 'admin' ? AdminDashboard::class : ClientDashboard::class)->name('dashboard');
+        if ($prefix === 'admin') {
+            Route::get('/users', UserManagement::class)->middleware('can:manage users')->name('users.index');
+            Route::get('/access', AccessManagement::class)->middleware('can:manage roles')->name('access.index');
+        } else {
+            Route::get('/profile', ClientProfile::class)->name('profile.edit');
+            Route::view('/submissions/new', 'new-submission')->name('submissions.create');
+            foreach (['policies' => 'My Policies / Covers', 'statements' => 'Statement of Account'] as $path => $title) {
+                Route::view('/'.$path, 'client-section', ['title' => $title, 'description' => 'Your company records.', 'section' => $path, 'status' => 'Records pending', 'emptyTitle' => 'Your records will appear here', 'emptyMessage' => 'Records are not available yet.'])->name($path);
+            }
+        }
+        Route::get('/submissions', [SubmissionPreviewController::class, 'index'])->defaults('category', 'all')->name('submissions');
+        Route::get('/submissions/{id}', [SubmissionPreviewController::class, 'show'])->name('submissions.show');
+        foreach (['claims' => 'claims', 'premium-adjustments' => 'adjustments', 'profit-commissions' => 'commissions', 'help' => 'help'] as $path => $category) {
+            Route::get('/'.$path, [SubmissionPreviewController::class, 'index'])->defaults('category', $category)->name($category);
         }
     });
-
+}
 
 // Static local preview: no authentication, sessions, or database records.
 Route::get('/demo/{page?}', function (string $page = 'home') {
@@ -53,4 +44,7 @@ Route::get('/demo/{page?}', function (string $page = 'home') {
     \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
     \Illuminate\View\Middleware\ShareErrorsFromSession::class,
 ])->name('cedant.demo');
+
+
+
 

@@ -110,3 +110,5 @@ document.getElementById('resetForm').addEventListener('submit', function() {
 </script>
 
 </x-layouts.auth>
+
+

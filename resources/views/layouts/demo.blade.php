@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
-    <title>{{ $title ?? 'Home' }} · Cedant Portal</title>
+    <title>{{ $title ?? 'Home' }} · {{ config('branding.company_name') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -32,11 +32,13 @@
         {{ $slot }}
     </main>
     <footer class="mx-auto flex max-w-6xl flex-wrap justify-between gap-3 px-4 py-6 text-xs text-slate-500 sm:px-6">
-        <span>&copy; {{ date('Y') }} Afro-Asian Reinsurance Brokerage</span>
+        <span>&copy; {{ date('Y') }} {{ config('branding.company_name') }}</span>
         <span>Cedant portal</span>
     </footer>
     
 </body>
 </html>
+
+
 
 

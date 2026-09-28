@@ -3,11 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Workspace' }} - {{ config('app.name', 'Noble Portal') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <title>{{ $title ?? 'Workspace' }} - {{ config('branding.company_name') }}</title>
+    @vite(['resources/css/app.css', 'resources/js/cedant.js'])
+    @livewireStyles
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-950 antialiased">
-    <div class="flex min-h-screen">
+    <div class="flex min-h-screen flex-col lg:flex-row">
         <x-dashboard.sidebar :section="$section ?? null" />
 
         <div class="flex min-w-0 flex-1 flex-col">
@@ -20,5 +21,10 @@
             <x-dashboard.footer />
         </div>
     </div>
+    @livewireScripts
 </body>
 </html>
+
+
+
+

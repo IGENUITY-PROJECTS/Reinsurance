@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Home' }} · Cedant Portal</title>
+    <title>{{ $title ?? 'Home' }} · {{ config('branding.company_name') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -26,7 +26,7 @@
             </div>
         </div>
         <nav aria-label="Portal navigation" class="mx-auto flex max-w-6xl flex-wrap gap-1 px-4 pb-3 sm:px-6">
-            @foreach(['client.dashboard' => 'Home', 'client.policies' => 'Policies / Covers', 'client.statements' => 'Statements', 'client.claims' => 'Claims', 'client.help' => 'Help & Feedback'] as $route => $label)
+            @foreach(['client.dashboard' => 'Home', 'client.policies' => 'Policies / Covers', 'client.statements' => 'Statements', 'client.claims' => 'Claims', 'client.adjustments' => 'Premium Adjustments', 'client.commissions' => 'Profit Commissions', 'client.help' => 'Help & Feedback'] as $route => $label)
                 <a href="{{ route($route) }}" @if(request()->routeIs($route)) aria-current="page" @endif class="rounded-lg px-3 py-3 text-sm font-medium {{ request()->routeIs($route) ? 'bg-brand-700 text-white' : 'text-slate-600 hover:bg-brand-50 hover:text-brand-800' }}">{{ $label }}</a>
             @endforeach
         </nav>
@@ -35,9 +35,12 @@
         {{ $slot }}
     </main>
     <footer class="mx-auto flex max-w-6xl flex-wrap justify-between gap-3 px-4 py-6 text-xs text-slate-500 sm:px-6">
-        <span>&copy; {{ date('Y') }} Afro-Asian Reinsurance Brokerage</span>
+        <span>&copy; {{ date('Y') }} {{ config('branding.company_name') }}</span>
         <span>Cedant portal</span>
     </footer>
     @livewireScripts
 </body>
 </html>
+
+
+

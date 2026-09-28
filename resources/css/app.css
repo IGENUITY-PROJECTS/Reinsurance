@@ -56,3 +56,5 @@
     --font-weight-700: 700;
 }
 
+
+[x-cloak] { display: none !important; }

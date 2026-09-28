@@ -1,41 +1,11 @@
-<section class="space-y-6">
+<section class="mx-auto max-w-7xl space-y-7">
+    <div class="flex flex-wrap items-center justify-between gap-4"><div><p class="text-xs font-semibold uppercase tracking-widest text-brand-600">Broker workspace</p><h1 class="mt-2 text-3xl font-semibold">Your overview</h1><p class="mt-2 text-sm text-slate-500">A quick look at the documents waiting for your team.</p></div><a href="{{ route('admin.submissions') }}" class="rounded-xl bg-brand-700 px-5 py-3 text-sm font-semibold text-white">View all submissions &rarr;</a></div>
+    <p class="text-xs text-amber-800">Demo workspace · Fictional submissions and cedants</p>
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p class="text-sm text-slate-500">Accounts</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-950">{{ $userCount }}</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p class="text-sm text-slate-500">Access groups</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-950">{{ $roleCount }}</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p class="text-sm text-slate-500">Environment</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-950">Live</p>
-        </div>
-        <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <p class="text-sm text-slate-500">Permissions</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-950">{{ $permissionCount }}</p>
-        </div>
+        @foreach(['claims' => ['Claims', 'Claim'], 'adjustments' => ['Premium adjustments', 'Premium adjustment'], 'commissions' => ['Profit commissions', 'Profit commission']] as $route => [$label, $type])
+            <a href="{{ route('admin.'.$route) }}" class="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-brand-300"><p class="text-sm text-slate-500">{{ $label }}</p><p class="mt-3 text-3xl font-semibold">{{ $all->where('type', $type)->count() }}</p><p class="mt-4 text-xs font-semibold text-brand-700">View all &rarr;</p></a>
+        @endforeach
+        <a href="{{ route('admin.help') }}" class="rounded-2xl border border-slate-200 bg-white p-5 hover:border-brand-300"><p class="text-sm text-slate-500">Help & feedback</p><p class="mt-3 text-3xl font-semibold">{{ count(config('portal_demo.feedback')) }}</p><p class="mt-4 text-xs font-semibold text-brand-700">View requests &rarr;</p></a>
     </div>
-
-    <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-lg font-semibold tracking-tight text-slate-950">Operations overview</h2>
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Use this control center for internal management, reporting, team settings, and project-specific administration modules.
-        </p>
-
-        <div class="mt-5 flex flex-wrap gap-3">
-            @can('manage users')
-                <a href="{{ route('admin.users.index') }}" class="rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-800">
-                    Manage users
-                </a>
-            @endcan
-
-            @can('manage roles')
-                <a href="{{ route('admin.access.index') }}" class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                    Manage access
-                </a>
-            @endcan
-        </div>
-    </div>
+    <div><div class="mb-4 flex items-center justify-between"><h2 class="text-lg font-semibold">Recent submissions</h2><a href="{{ route('admin.submissions') }}" class="text-sm font-semibold text-brand-700">View all</a></div><x-submission-table :items="$recent" :broker="true" prefix="admin" /></div>
 </section>

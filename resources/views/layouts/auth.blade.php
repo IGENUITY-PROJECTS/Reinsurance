@@ -4,3 +4,5 @@
         {{ $slot }}
     </div>
 </x-layouts.auth>
+
+

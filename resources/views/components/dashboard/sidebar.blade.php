@@ -1,43 +1,11 @@
 @props(['section' => null])
-
-<aside class="hidden w-72 shrink-0 border-r border-brand-900 bg-brand-950 text-white lg:block">
-    <div class="flex h-16 items-center border-b border-white/10 px-6">
-        <a href="{{ route('dashboard') }}" class="text-lg font-semibold tracking-tight">
-            <x-brand-logo variant="dark" />
-        </a>
-    </div>
-
-    <nav class="space-y-1 px-4 py-5 text-sm">
-        @can('view admin dashboard')
-            <a href="{{ route('admin.dashboard') }}" class="block rounded-md px-3 py-2 font-medium {{ $section === 'admin' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-100 hover:bg-white/10 hover:text-white' }}">
-                Control Center
-            </a>
-        @endcan
-
-        @can('manage users')
-            <a href="{{ route('admin.users.index') }}" class="block rounded-md px-3 py-2 font-medium {{ $section === 'users' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-100 hover:bg-white/10 hover:text-white' }}">
-                User Management
-            </a>
-        @endcan
-
-        @can('manage roles')
-            <a href="{{ route('admin.access.index') }}" class="block rounded-md px-3 py-2 font-medium {{ $section === 'access' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-100 hover:bg-white/10 hover:text-white' }}">
-                Roles & Permissions
-            </a>
-        @endcan
-
-        @role('client')
-            <a href="{{ route('client.dashboard') }}" class="block rounded-md px-3 py-2 font-medium {{ $section === 'client' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-100 hover:bg-white/10 hover:text-white' }}">
-                Client Hub
-            </a>
-
-            <a href="{{ route('client.profile.edit') }}" class="block rounded-md px-3 py-2 font-medium {{ $section === 'client-profile' ? 'bg-white text-brand-800 shadow-sm' : 'text-brand-100 hover:bg-white/10 hover:text-white' }}">
-                Profile Settings
-            </a>
-        @endrole
-
-        <a href="{{ route('home') }}" class="block rounded-md px-3 py-2 font-medium text-brand-100 hover:bg-white/10 hover:text-white">
-            Public Site
-        </a>
+<aside class="w-full shrink-0 border-b border-brand-900 bg-brand-950 text-white lg:min-h-screen lg:w-64 lg:border-b-0 lg:border-r">
+    <a href="{{ route('admin.dashboard') }}" class="block border-b border-white/10 px-5 py-6"><x-brand-logo variant="dark" /></a>
+    <nav aria-label="Broker navigation" class="flex flex-wrap gap-1 p-3 text-sm lg:block lg:space-y-1 lg:p-4">
+        @foreach(['admin.dashboard' => 'Overview', 'admin.submissions' => 'All submissions', 'admin.claims' => 'Claims', 'admin.adjustments' => 'Premium Adjustments', 'admin.commissions' => 'Profit Commissions', 'admin.help' => 'Help & Feedback'] as $route => $label)
+            <a href="{{ route($route) }}" @if(request()->routeIs($route)) aria-current="page" @endif class="block rounded-xl px-3 py-3 font-medium {{ request()->routeIs($route) ? 'bg-white text-brand-900' : 'text-brand-100 hover:bg-white/10' }}">{{ $label }}</a>
+        @endforeach
+        @can('manage users')<a href="{{ route('admin.users.index') }}" class="block rounded-xl px-3 py-3 text-brand-100 hover:bg-white/10">User Management</a>@endcan
+        @can('manage roles')<a href="{{ route('admin.access.index') }}" class="block rounded-xl px-3 py-3 text-brand-100 hover:bg-white/10">Roles & Permissions</a>@endcan
     </nav>
 </aside>
