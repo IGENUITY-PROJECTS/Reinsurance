@@ -20,7 +20,11 @@ foreach (['admin' => ['auth', 'role_or_permission:super-admin|admin|view admin d
             Route::get('/access', AccessManagement::class)->middleware('can:manage roles')->name('access.index');
         } else {
             Route::get('/profile', ClientProfile::class)->name('profile.edit');
-            Route::view('/submissions/new', 'new-submission')->name('submissions.create');
+            Route::view('/submissions/new', 'new-submission', ['module' => 'claims', 'formTitle' => 'New claim', 'backLabel' => 'Claims'])->name('submissions.create');
+            Route::view('/claims/new', 'new-submission', ['module' => 'claims', 'formTitle' => 'New claim', 'backLabel' => 'Claims'])->name('claims.create');
+            Route::view('/premium-adjustments/new', 'new-submission', ['module' => 'adjustments', 'formTitle' => 'New premium adjustment', 'backLabel' => 'Premium Adjustments'])->name('adjustments.create');
+            Route::view('/profit-commissions/new', 'new-submission', ['module' => 'commissions', 'formTitle' => 'New profit commission', 'backLabel' => 'Profit Commissions'])->name('commissions.create');
+            Route::view('/help/new', 'new-submission', ['module' => 'help', 'formTitle' => 'New help request', 'backLabel' => 'Help & Feedback'])->name('help.create');
             foreach (['policies' => 'My Policies / Covers', 'statements' => 'Statement of Account'] as $path => $title) {
                 Route::view('/'.$path, 'client-section', ['title' => $title, 'description' => 'Your company records.', 'section' => $path, 'status' => 'Records pending', 'emptyTitle' => 'Your records will appear here', 'emptyMessage' => 'Records are not available yet.'])->name($path);
             }

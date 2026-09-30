@@ -1,6 +1,6 @@
 @component($layout, ['title' => $title, 'section' => $category])
 <div class="space-y-6">
-    <div class="flex flex-wrap items-center justify-between gap-4"><div><p class="text-xs font-semibold uppercase tracking-widest text-brand-600">{{ $broker ? 'Broker workspace' : 'Cedant portal' }}</p><h1 class="mt-2 text-2xl font-semibold">{{ $title }}</h1><p class="mt-2 text-sm text-slate-500">Find a submission, then select View for documents and feedback.</p></div>@if(!$broker)<a href="{{ route('client.submissions.create') }}" class="rounded-xl bg-brand-700 px-5 py-3 text-sm font-semibold text-white">New submission</a>@endif</div>
+    <div class="flex flex-wrap items-center justify-between gap-4"><div><p class="text-xs font-semibold uppercase tracking-widest text-brand-600">{{ $broker ? 'Broker workspace' : 'Cedant portal' }}</p><h1 class="mt-2 text-2xl font-semibold">{{ $title }}</h1><p class="mt-2 text-sm text-slate-500">Find a submission, then select View for documents and feedback.</p></div>@if(!$broker)<a href="{{ route('client.'.($category === 'all' ? 'claims' : $category).'.create') }}" class="rounded-xl bg-brand-700 px-5 py-3 text-sm font-semibold text-white">{{ $category === 'all' ? 'New claim' : 'New submission' }}</a>@endif</div>
     <p class="text-xs text-amber-800">Demo records · No documents or feedback are saved.</p>
     <form method="GET" class="rounded-2xl border border-slate-200 bg-white p-5">
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-{{ $broker ? '3' : '2' }}">
