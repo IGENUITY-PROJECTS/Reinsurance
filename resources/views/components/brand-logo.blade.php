@@ -1,7 +1,7 @@
-@props(['variant' => 'light', 'showText' => true])
+@props(['variant' => 'light', 'showText' => true, 'displayName' => null, 'displayTagline' => null])
 @php
     $dark = $variant === 'dark';
-    $company = config('branding.company_name');
+    $company = $displayName ?? config('branding.company_name');
     $initials = collect(preg_split('/[\s-]+/u', trim($company), -1, PREG_SPLIT_NO_EMPTY))->take(2)->map(fn ($word) => mb_substr($word, 0, 1))->implode('');
 @endphp
 <div {{ $attributes->merge(['class' => 'flex min-w-0 items-center gap-3']) }}>
@@ -13,7 +13,7 @@
     @if($showText)
         <div class="min-w-0 leading-tight">
             <p class="break-words text-base font-semibold tracking-tight {{ $dark ? 'text-white' : 'text-brand-950' }}">{{ $company }}</p>
-            <p class="mt-1 text-xs {{ $dark ? 'text-brand-200' : 'text-slate-500' }}">{{ config('branding.tagline') }}</p>
+            <p class="mt-1 text-xs {{ $dark ? 'text-brand-200' : 'text-slate-500' }}">{{ $displayTagline ?? config('branding.tagline') }}</p>
         </div>
     @endif
 </div>

@@ -88,4 +88,9 @@ class Cover extends Model
     {
         return 'CoverNo';
     }
+
+    public function premiumAdjustments(): HasMany
+    {
+        return $this->hasMany(PremiumAdjustment::class, 'CoverNo', 'CoverNo');
+    }
 }

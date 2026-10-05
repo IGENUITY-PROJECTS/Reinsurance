@@ -4,7 +4,7 @@
             {{ $editingUserId ? 'Edit user' : 'Create user' }}
         </h2>
         <p class="mt-2 text-sm leading-6 text-slate-600">
-            This form is powered by Livewire. It saves users and syncs their Spatie roles without writing custom JavaScript.
+            Create an account and choose which parts of the portal it can access.
         </p>
 
         @if (session('status'))
@@ -95,6 +95,7 @@
                 </div>
             @endforeach
         </div>
+        <div class="border-t border-slate-200 px-6 py-4">{{ $users->links() }}</div>
     </div>
 </section>
 

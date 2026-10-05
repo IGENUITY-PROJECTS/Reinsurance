@@ -3,13 +3,22 @@
 namespace App\Livewire\Admin\Users;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
 
 class Index extends Component
 {
+    use WithPagination;
+
+    public function mount(): void
+    {
+        Gate::authorize('manage users');
+    }
+
     public string $name = '';
 
     public string $email = '';
@@ -22,6 +31,8 @@ class Index extends Component
 
     public function save(): void
     {
+        Gate::authorize('manage users');
+
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique(User::class)->ignore($this->editingUserId)],
@@ -61,6 +72,8 @@ class Index extends Component
 
     public function edit(int $userId): void
     {
+        Gate::authorize('manage users');
+
         $user = User::findOrFail($userId);
 
         $this->editingUserId = $user->id;
@@ -72,6 +85,8 @@ class Index extends Component
 
     public function delete(int $userId): void
     {
+        Gate::authorize('manage users');
+
         abort_if(auth()->id() === $userId, 403, 'You cannot delete your own account.');
 
         User::findOrFail($userId)->delete();
@@ -80,6 +95,7 @@ class Index extends Component
             $this->resetForm();
         }
 
+        $this->resetPage();
         session()->flash('status', 'User deleted successfully.');
     }
 
@@ -91,8 +107,10 @@ class Index extends Component
 
     public function render()
     {
+        Gate::authorize('manage users');
+
         return view('livewire.admin.users.index', [
-            'users' => User::query()->with('roles')->latest()->get(),
+            'users' => User::query()->with('roles')->orderByDesc('id')->paginate(15),
             'roles' => Role::query()->orderBy('name')->get(),
         ])->layout('layouts.dashboard', [
             'title' => 'User Management',

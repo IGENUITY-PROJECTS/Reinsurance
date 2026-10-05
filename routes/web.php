@@ -1,9 +1,12 @@
 <?php
+
+use App\Http\Controllers\CedantRecordsController;
+use App\Http\Controllers\CedantSubmissionController;
 use App\Http\Controllers\DashboardRedirectController;
-use App\Http\Controllers\SubmissionPreviewController;
+use App\Http\Controllers\SubmissionReviewController;
 use App\Livewire\Admin\Access\Index as AccessManagement;
-use App\Livewire\Admin\Users\Index as UserManagement;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
+use App\Livewire\Admin\Users\Index as UserManagement;
 use App\Livewire\Client\Dashboard as ClientDashboard;
 use App\Livewire\Client\Profile\Edit as ClientProfile;
 use App\Livewire\Frontend\Home;
@@ -20,35 +23,29 @@ foreach (['admin' => ['auth', 'role_or_permission:super-admin|admin|view admin d
             Route::get('/access', AccessManagement::class)->middleware('can:manage roles')->name('access.index');
         } else {
             Route::get('/profile', ClientProfile::class)->name('profile.edit');
-            Route::view('/submissions/new', 'new-submission', ['module' => 'claims', 'formTitle' => 'New claim', 'backLabel' => 'Claims'])->name('submissions.create');
-            Route::view('/claims/new', 'new-submission', ['module' => 'claims', 'formTitle' => 'New claim', 'backLabel' => 'Claims'])->name('claims.create');
-            Route::view('/premium-adjustments/new', 'new-submission', ['module' => 'adjustments', 'formTitle' => 'New premium adjustment', 'backLabel' => 'Premium Adjustments'])->name('adjustments.create');
-            Route::view('/profit-commissions/new', 'new-submission', ['module' => 'commissions', 'formTitle' => 'New profit commission', 'backLabel' => 'Profit Commissions'])->name('commissions.create');
-            Route::view('/help/new', 'new-submission', ['module' => 'help', 'formTitle' => 'New help request', 'backLabel' => 'Help & Feedback'])->name('help.create');
-            foreach (['policies' => 'My Policies / Covers', 'statements' => 'Statement of Account'] as $path => $title) {
-                Route::view('/'.$path, 'client-section', ['title' => $title, 'description' => 'Your company records.', 'section' => $path, 'status' => 'Records pending', 'emptyTitle' => 'Your records will appear here', 'emptyMessage' => 'Records are not available yet.'])->name($path);
-            }
+            Route::get('/submissions/new', [CedantSubmissionController::class, 'create'])->defaults('module', 'claims')->name('submissions.create');
+            Route::get('/claims/new', [CedantSubmissionController::class, 'create'])->defaults('module', 'claims')->name('claims.create');
+            Route::get('/premium-adjustments/new', [CedantSubmissionController::class, 'create'])->defaults('module', 'adjustments')->name('adjustments.create');
+            Route::post('/claims', [CedantSubmissionController::class, 'store'])->defaults('module', 'claims')->middleware('throttle:30,1')->name('claims.store');
+            Route::post('/premium-adjustments', [CedantSubmissionController::class, 'store'])->defaults('module', 'adjustments')->middleware('throttle:30,1')->name('adjustments.store');
+            Route::get('/cover-options', [CedantSubmissionController::class, 'coverOptions'])->name('cover-options');
         }
-        Route::get('/submissions', [SubmissionPreviewController::class, 'index'])->defaults('category', 'all')->name('submissions');
-        Route::get('/submissions/{id}', [SubmissionPreviewController::class, 'show'])->name('submissions.show');
-        foreach (['claims' => 'claims', 'premium-adjustments' => 'adjustments', 'profit-commissions' => 'commissions', 'help' => 'help'] as $path => $category) {
-            Route::get('/'.$path, [SubmissionPreviewController::class, 'index'])->defaults('category', $category)->name($category);
+        Route::get('/policies', [CedantRecordsController::class, 'covers'])->name('policies');
+        Route::get('/policies/{number}', [CedantRecordsController::class, 'cover'])->name('policies.show');
+        Route::get('/statements', [CedantRecordsController::class, 'statements'])->name('statements');
+        Route::get('/rbs-adjustments/{id}', [CedantRecordsController::class, 'officialAdjustment'])->whereNumber('id')->name('rbs-adjustments.show');
+        Route::get('/rbs-claims/{number}', [CedantRecordsController::class, 'officialClaim'])->name('rbs-claims.show');
+        Route::get('/documents/{kind}/{id}', [CedantRecordsController::class, 'document'])->whereNumber('id')->name('documents.download');
+        Route::get('/submissions', [CedantRecordsController::class, 'index'])->defaults('category', 'all')->name('submissions');
+        Route::post('/submissions/{id}/feedback', [SubmissionReviewController::class, 'feedback'])->middleware('throttle:30,1')->name('submissions.feedback');
+        Route::post('/submissions/{id}/documents', [SubmissionReviewController::class, 'documents'])->middleware('throttle:15,1')->name('submissions.documents');
+        if ($prefix === 'admin') {
+            // Portal status review deferred; preserve handler for a future phase.
+            // Route::post('/submissions/{id}/review', [SubmissionReviewController::class, 'review'])->middleware(['role:admin|super-admin', 'throttle:30,1'])->name('submissions.review');
+        }
+        Route::get('/submissions/{id}', [CedantRecordsController::class, 'show'])->name('submissions.show');
+        foreach (['claims' => 'claims', 'premium-adjustments' => 'adjustments', 'help' => 'help'] as $path => $category) {
+            Route::get('/'.$path, [CedantRecordsController::class, 'index'])->defaults('category', $category)->name($category);
         }
     });
 }
-
-// Static local preview: no authentication, sessions, or database records.
-Route::get('/demo/{page?}', function (string $page = 'home') {
-    abort_unless(app()->environment(['local', 'testing']), 404);
-    $titles = ['home' => 'Home', 'policies' => 'My Policies / Covers', 'statements' => 'Statement of Account', 'claims' => 'My Claims', 'help' => 'Help & Feedback', 'account' => 'My account'];
-    abort_unless(isset($titles[$page]), 404);
-    return view('demo', ['page' => $page, 'title' => $titles[$page]]);
-})->withoutMiddleware([
-    \Illuminate\Session\Middleware\StartSession::class,
-    \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
-    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-])->name('cedant.demo');
-
-
-
-

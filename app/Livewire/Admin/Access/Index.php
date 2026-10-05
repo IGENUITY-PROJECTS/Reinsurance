@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin\Access;
 
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -18,6 +19,8 @@ class Index extends Component
 
     public function mount(): void
     {
+        Gate::authorize('manage roles');
+
         $firstRole = Role::query()->orderBy('name')->first();
 
         if ($firstRole) {
@@ -27,6 +30,8 @@ class Index extends Component
 
     public function createRole(): void
     {
+        Gate::authorize('manage roles');
+
         $this->roleName = str($this->roleName)->lower()->trim()->replace(' ', '-')->toString();
 
         $this->validate([
@@ -41,6 +46,8 @@ class Index extends Component
 
     public function createPermission(): void
     {
+        Gate::authorize('manage roles');
+
         $this->permissionName = str($this->permissionName)->lower()->trim()->squish()->toString();
 
         $this->validate([
@@ -55,6 +62,8 @@ class Index extends Component
 
     public function selectRole(int $roleId): void
     {
+        Gate::authorize('manage roles');
+
         $role = Role::findOrFail($roleId);
 
         $this->selectedRoleId = $role->id;
@@ -63,6 +72,8 @@ class Index extends Component
 
     public function saveRolePermissions(): void
     {
+        Gate::authorize('manage roles');
+
         $this->validate([
             'selectedRoleId' => ['required', 'exists:roles,id'],
             'selectedPermissions' => ['array'],
@@ -76,16 +87,22 @@ class Index extends Component
 
     public function selectAllPermissions(): void
     {
+        Gate::authorize('manage roles');
+
         $this->selectedPermissions = Permission::query()->pluck('name')->all();
     }
 
     public function clearPermissions(): void
     {
+        Gate::authorize('manage roles');
+
         $this->selectedPermissions = [];
     }
 
     public function render()
     {
+        Gate::authorize('manage roles');
+
         $selectedRole = $this->selectedRoleId
             ? Role::query()->with('permissions')->find($this->selectedRoleId)
             : null;

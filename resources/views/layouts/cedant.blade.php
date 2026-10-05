@@ -26,7 +26,7 @@
             </div>
         </div>
         <nav aria-label="Portal navigation" class="mx-auto flex max-w-6xl flex-wrap gap-1 px-4 pb-3 sm:px-6">
-            @foreach(['client.dashboard' => 'Home', 'client.policies' => 'Policies / Covers', 'client.statements' => 'Statements', 'client.claims' => 'Claims', 'client.adjustments' => 'Premium Adjustments', 'client.commissions' => 'Profit Commissions', 'client.help' => 'Help & Feedback'] as $route => $label)
+            @foreach(['client.dashboard' => 'Home', 'client.policies' => 'Policies / Covers', 'client.statements' => 'Statements', 'client.claims' => 'Claims', 'client.adjustments' => 'Premium Adjustments', 'client.help' => 'Help & Feedback'] as $route => $label)
                 <a href="{{ route($route) }}" @if(request()->routeIs($route)) aria-current="page" @endif class="rounded-lg px-3 py-3 text-sm font-medium {{ request()->routeIs($route) ? 'bg-brand-700 text-white' : 'text-slate-600 hover:bg-brand-50 hover:text-brand-800' }}">{{ $label }}</a>
             @endforeach
         </nav>

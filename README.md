@@ -1,59 +1,65 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Afro-Asian brokerage portal
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel portal for cedants and broker administrators to view covers and statements, submit claims and premium adjustments, upload private documents, and exchange feedback.
 
-## About Laravel
+## Local setup
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Requires PHP 8.2+, Composer, Node.js with npm, and SQL Server with the PHP SQLSRV/PDO_SQLSRV drivers.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+```powershell
+composer install
+Copy-Item .env.example .env
+php artisan key:generate
+npm ci
+```
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Configure your database connection and COMPANY_NAME in `.env`. Review and run migrations against the intended database:
 
-## Learning Laravel
+```powershell
+php artisan migrate --pretend
+php artisan migrate
+npm run build
+php artisan serve
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Demo data
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Use a separate local database with APP_ENV=local:
 
-## Laravel Sponsors
+```powershell
+php artisan db:seed --class=DemoSeeder
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+New demo accounts use password `password`: `admin@example.com`, `superadmin@example.com`, `client@example.com`, and `client2@example.com`. Existing passwords are preserved. Demo seeding is blocked outside local/testing environments. See [demo and seeding details](docs/demo-seeding.md).
 
-### Premium Partners
+## Production seeding
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```powershell
+php artisan db:seed --class=ProductionRolesSeeder --force
+```
 
-## Contributing
+The default DatabaseSeeder also creates only roles and permissions, with no demo accounts or business records. RolesSeeder contains the shared role definitions. Provision the first administrator through an authorised process.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+For deployment, configure APP_ENV=production, APP_DEBUG=false, HTTPS, real database/mail settings, and private document storage. Install PHP dependencies with `composer install --no-dev --optimize-autoloader`, build frontend assets with `npm ci` and `npm run build`, and apply reviewed migrations with a database backup. Keep `.env`, private documents and credentials out of Git.
 
-## Code of Conduct
+## Mirrored source tables
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| RBS source | Portal table |
+| --- | --- |
+| CSCompanies | companies |
+| RECoverHeader | covers |
+| RECoverReinsurers | cover_reinsurers |
+| REClaims | claims |
+| ARDebtorsPremiums | cedant_premiums |
+| APCreditorsClaims | cedant_claim_payables |
+| REPremiumAdjustment | premium_adjustments |
 
-## Security Vulnerabilities
+Company codes, cover numbers and claim numbers retain their source meaning. Mirror tables allow independent sync order. Portal submissions and private documents are separate from mirrored records.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Current scope
 
-## License
+Cedant records are restricted to the linked company. Claims are facultative, require supporting documents and use OrigClaimNo as the submitted/generated reference. Premium adjustments use CoverNo. Both sides have paginated Help & Feedback lists. Official claim status comes from linked mirrored claims; portal status controls remain deferred. Profit commissions remain disabled.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The RBS synchronisation process and automatic claim linking are still pending. A company-code registration check confirms a company exists; it does not verify that a registrant works for that company. Decide the invitation/approval process before public production registration.
+
+The previous test suite and obsolete preview files were archived outside the repository during cleanup. Test files were removed at the project owner's request. Standard development dependencies remain available; production installs exclude them using `--no-dev`.
