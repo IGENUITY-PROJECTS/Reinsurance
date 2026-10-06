@@ -23,12 +23,12 @@ class Dashboard extends Component
         // + PremiumAdjustmentSubmission::whereIn('portal_status', ['submitted', 'under_review'])->count();
         $recent = collect();
         foreach ([ClaimSubmission::class, PremiumAdjustmentSubmission::class] as $class) {
-            $recent = $recent->concat($class::with('company')->latest()->orderByDesc('id')->limit(5)->get()->map(fn ($r) => [
+            $recent = $recent->concat($class::with($class === ClaimSubmission::class ? ['company', 'claim'] : ['company'])->latest()->orderByDesc('id')->limit(5)->get()->map(fn ($r) => [
                 'id' => $r instanceof ClaimSubmission ? $r->OrigClaimNo : $r->CoverNo,
                 'route_key' => $r->submission_reference, 'company' => $r->company?->CompanyName ?? $r->company_code,
                 'title' => $r instanceof ClaimSubmission ? ($r->InsuredName ?: 'Claim') : 'Premium adjustment',
                 'type' => $r instanceof ClaimSubmission ? 'Claim' : 'Premium adjustment',
-                'status' => $r->portal_status, 'date' => $r->created_at->format('Y-m-d'), 'sort' => $r->created_at,
+                'status' => $r instanceof ClaimSubmission ? $r->rbs_status : 'Not available', 'date' => $r->created_at->format('Y-m-d'), 'sort' => $r->created_at,
             ]));
         }
         $recent = $recent->sortByDesc('sort')->take(5);

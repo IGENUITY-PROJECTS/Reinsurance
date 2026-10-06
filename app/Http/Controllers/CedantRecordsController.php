@@ -65,10 +65,11 @@ class CedantRecordsController extends Controller
         $filter = $request->validate(['company' => 'nullable|string|max:50', 'q' => 'nullable|string|max:150', 'status' => 'nullable|string|max:80', 'from' => 'nullable|date', 'to' => 'nullable|date|after_or_equal:from']);
         $claims = $this->owned(DB::table('claim_submissions'), 'company_code', $code)
             ->select(['submission_reference', 'OrigClaimNo as reference', 'InsuredName as title', 'CoverNo as policy', 'portal_status as status', 'created_at', 'company_code'])
+            ->addSelect('ClaimNo as claim_number')
             ->selectRaw("'Claim' as type");
         $adjustments = $this->owned(DB::table('premium_adjustment_submissions'), 'company_code', $code)
             ->select(['submission_reference', 'CoverNo as reference', 'details as title', 'CoverNo as policy', 'portal_status as status', 'created_at', 'company_code'])
-            ->selectRaw("'Premium adjustment' as type");
+            ->selectRaw("NULL as claim_number, 'Premium adjustment' as type");
         $base = match ($category) {
             'claims' => $claims, 'adjustments' => $adjustments,
             default => $claims->unionAll($adjustments),
@@ -95,10 +96,18 @@ class CedantRecordsController extends Controller
             $query->whereDate('created_at', '<=', $filter['to']);
         }
         $items = $query->orderByDesc('created_at')->orderBy('submission_reference')->paginate(10)->withQueryString();
+        $linkedClaims = Claim::whereIn('ClaimNo', $items->getCollection()->pluck('claim_number')->filter())
+            ->get()->keyBy('ClaimNo');
         $items->through(fn ($r) => [
             'id' => $r->reference, 'route_key' => $r->submission_reference,
             'title' => $r->title ?: $r->type, 'policy' => $r->policy,
-            'type' => $r->type, 'status' => $r->status,
+            'type' => $r->type,
+            'status' => $r->type !== 'Claim' ? 'Not available'
+                : (($linked = $linkedClaims->get($r->claim_number))
+                    && $linked->CedCode === $r->company_code
+                    && (! $r->policy || $linked->CoverNo === $r->policy)
+                    ? ($linked->MStatusDesc ?: ($linked->MStatusCode ?: 'Not available'))
+                    : 'Awaiting RBS update'),
             'company' => $r->company_code,
             'date' => substr((string) $r->created_at, 0, 10),
         ]);

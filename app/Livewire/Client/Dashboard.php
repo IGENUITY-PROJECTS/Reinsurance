@@ -20,12 +20,12 @@ class Dashboard extends Component
             'Claim submissions' => (clone $claims)->count(),
             'Premium adjustments' => (clone $adjustments)->count(),
         ];
-        $recent = (clone $claims)->latest()->orderByDesc('id')->take(3)->get()->map(fn ($r) => [
+        $recent = (clone $claims)->with('claim')->latest()->orderByDesc('id')->take(3)->get()->map(fn ($r) => [
             'id' => $r->OrigClaimNo, 'route_key' => $r->submission_reference, 'title' => $r->InsuredName ?: 'Claim',
-            'type' => 'Claim', 'status' => $r->portal_status, 'date' => $r->created_at->format('Y-m-d'),
+            'type' => 'Claim', 'status' => $r->rbs_status, 'date' => $r->created_at->format('Y-m-d'),
         ])->concat((clone $adjustments)->latest()->orderByDesc('id')->take(3)->get()->map(fn ($r) => [
             'id' => $r->CoverNo, 'route_key' => $r->submission_reference, 'title' => $r->details ?: 'Premium adjustment',
-            'type' => 'Premium adjustment', 'status' => $r->portal_status, 'date' => $r->created_at->format('Y-m-d'),
+            'type' => 'Premium adjustment', 'status' => 'Not available', 'date' => $r->created_at->format('Y-m-d'),
         ]))->sortByDesc('date')->take(3);
 
         return view('livewire.client.dashboard', compact('company', 'counts', 'recent'))

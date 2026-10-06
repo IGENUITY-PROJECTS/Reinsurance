@@ -85,10 +85,12 @@
                 <label class="block text-sm font-medium">Loss details <span class="text-red-600">*</span>
                     <textarea name="LossDetails" required maxlength="2000" rows="5" placeholder="Briefly describe what happened." class="mt-2 block w-full rounded-lg border border-slate-300 p-3">{{ old('LossDetails') }}</textarea>
                 </label>
+                {{-- Deferred: claim amounts are entered in RBS and displayed from the mirrored claim.
                 <label class="block text-sm font-medium">Estimated claim amount (optional)
                     <input name="ClaimAmt" inputmode="decimal" value="{{ old('ClaimAmt') }}" placeholder="0.00" class="mt-2 block w-full rounded-lg border border-slate-300 p-3">
                     <span class="mt-1 block text-xs font-normal text-slate-500">Use the currency of your selected cover.</span>
                 </label>
+                --}}
             @else
                 <label class="block text-sm font-medium">Adjustment details <span class="text-red-600">*</span>
                     <textarea name="details" required maxlength="10000" rows="5" class="mt-2 block w-full rounded-lg border border-slate-300 p-3">{{ old('details') }}</textarea>

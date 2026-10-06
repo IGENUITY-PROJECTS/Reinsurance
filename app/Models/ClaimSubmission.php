@@ -75,6 +75,17 @@ class ClaimSubmission extends Model
         return $this->belongsTo(Claim::class, 'ClaimNo', 'ClaimNo');
     }
 
+    public function getRbsStatusAttribute(): string
+    {
+        $claim = $this->claim;
+        if (! $claim || $claim->CedCode !== $this->company_code
+            || ($this->CoverNo && $claim->CoverNo !== $this->CoverNo)) {
+            return 'Awaiting RBS update';
+        }
+
+        return $claim->MStatusDesc ?: ($claim->MStatusCode ?: 'Not available');
+    }
+
     public function submitter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'submitted_by', 'id');

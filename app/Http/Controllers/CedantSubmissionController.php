@@ -97,7 +97,7 @@ class CedantSubmissionController extends Controller
                 'DateLoss' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
                 'LossLocation' => ['nullable', 'string', 'max:250'],
                 'LossDetails' => ['required', 'string', 'max:2000'],
-                'ClaimAmt' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,8})?$/'],
+                // 'ClaimAmt' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,8})?$/'],
             ];
         } else {
             $rules['details'] = ['required', 'string', 'max:10000'];
@@ -105,7 +105,7 @@ class CedantSubmissionController extends Controller
         $input = $request->validate($rules, [
             'CoverNo.exists' => 'Choose one of your company’s available covers.',
             'documents.required' => 'Attach at least one supporting document.',
-            'ClaimAmt.regex' => 'Enter a non-negative amount with up to 8 decimal places.',
+            // 'ClaimAmt.regex' => 'Enter a non-negative amount with up to 8 decimal places.',
         ]);
         // One form token identifies one submission, including a double click/retry.
         $existing = $model::where('submission_reference', $input['_submission_token'])->first();
@@ -141,7 +141,7 @@ class CedantSubmissionController extends Controller
                         'DateReported' => now()->format('Ymd'),
                         'LossLocation' => $input['LossLocation'] ?? null,
                         'LossDetails' => $input['LossDetails'],
-                        'ClaimAmt' => $input['ClaimAmt'] ?? null,
+                        // 'ClaimAmt' => $input['ClaimAmt'] ?? null,
                         'ClaimCurrencyCode' => $cover->MCurrency,
                     ]);
                 } else {
