@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CedantClaimPayable;
-use App\Models\CedantPremium;
 use App\Models\Claim;
 use App\Models\ClaimDocument;
 use App\Models\ClaimSubmission;
@@ -219,24 +217,6 @@ class CedantRecordsController extends Controller
         $claim = $this->owned(Claim::query(), 'CedCode', $this->code($request))->where('ClaimNo', $number)->firstOrFail();
 
         return $this->screen('client-records.claim', compact('claim'));
-    }
-
-    public function statements(Request $request)
-    {
-        $filter = $request->validate(['kind' => 'nullable|in:premiums,claims', 'q' => 'nullable|string|max:150', 'currency' => 'nullable|string|max:50']);
-        $kind = $filter['kind'] ?? 'premiums';
-        $query = $this->owned($kind === 'premiums' ? CedantPremium::query() : CedantClaimPayable::query(), 'CedantCode', $this->code($request));
-        $currencies = (clone $query)->whereNotNull('CurrencyCode')->distinct()->pluck('CurrencyCode');
-        if (! empty($filter['currency'])) {
-            $query->where('CurrencyCode', $filter['currency']);
-        }
-        if (! empty($filter['q'])) {
-            $term = '%'.$filter['q'].'%';
-            $query->where(fn ($q) => $q->where('DocumentNo', 'like', $term)->orWhere('RiskNoteRef', 'like', $term));
-        }
-        $records = $query->orderByDesc('DocumentDate')->orderBy('id')->paginate(10)->withQueryString();
-
-        return $this->screen('client-records.statements', compact('records', 'kind', 'currencies'));
     }
 
     public function officialAdjustment(Request $request, int $id)

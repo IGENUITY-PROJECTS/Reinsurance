@@ -4,6 +4,7 @@ use App\Http\Controllers\CedantRecordsController;
 use App\Http\Controllers\CedantSubmissionController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\StatementReportController;
 use App\Http\Controllers\SubmissionReviewController;
 use App\Livewire\Admin\Access\Index as AccessManagement;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
@@ -40,7 +41,8 @@ foreach (['admin' => ['auth', 'role_or_permission:super-admin|admin|view admin d
         Route::post('/help/{reference}/replies', [FeedbackController::class, 'reply'])->middleware('throttle:30,1')->name('help.reply');
         Route::get('/policies', [CedantRecordsController::class, 'covers'])->name('policies');
         Route::get('/policies/{number}', [CedantRecordsController::class, 'cover'])->name('policies.show');
-        Route::get('/statements', [CedantRecordsController::class, 'statements'])->name('statements');
+        Route::get('/statements', [StatementReportController::class, 'index'])->name('statements');
+        Route::get('/statements/download/{format}', [StatementReportController::class, 'download'])->whereIn('format', ['xlsx', 'pdf'])->middleware('throttle:10,1')->name('statements.download');
         Route::get('/rbs-adjustments/{id}', [CedantRecordsController::class, 'officialAdjustment'])->whereNumber('id')->name('rbs-adjustments.show');
         Route::get('/rbs-claims/{number}', [CedantRecordsController::class, 'officialClaim'])->name('rbs-claims.show');
         Route::get('/documents/{kind}/{id}', [CedantRecordsController::class, 'document'])->whereNumber('id')->name('documents.download');
