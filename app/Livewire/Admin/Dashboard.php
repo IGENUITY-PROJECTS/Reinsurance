@@ -4,8 +4,8 @@ namespace App\Livewire\Admin;
 
 use App\Models\ClaimSubmission;
 use App\Models\Cover;
+use App\Models\FeedbackConversation;
 use App\Models\PremiumAdjustmentSubmission;
-use App\Models\SubmissionFeedback;
 use Livewire\Component;
 
 class Dashboard extends Component
@@ -16,7 +16,7 @@ class Dashboard extends Component
             'claims' => ['Claims', ClaimSubmission::count()],
             'adjustments' => ['Premium adjustments', PremiumAdjustmentSubmission::count()],
             'policies' => ['Covers', Cover::count()],
-            'help' => ['Help & Feedback', SubmissionFeedback::count()],
+            'help' => ['Help & Feedback', FeedbackConversation::count()],
         ];
         // Portal review counts deferred.
         // $pending = ClaimSubmission::whereIn('portal_status', ['submitted', 'under_review'])->count()

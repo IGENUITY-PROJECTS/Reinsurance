@@ -17,7 +17,7 @@
     <x-submission-table :items="$items" :broker="$broker" :prefix="$prefix" />
     {{ $items->links() }}
     @if(isset($officialClaims) && $officialClaims !== null)
-        <h2 class="mt-8 text-xl font-semibold">Official RBS claims</h2>
+        <h2 class="mt-8 text-xl font-semibold">Claims</h2>
         <x-record-table :headers="['Claim number', 'Your reference', 'Cover', 'Status', 'Currency', 'Amount']" :rows="$officialClaims->map(fn($r) => [['label' => $r->ClaimNo, 'url' => route($prefix.'.rbs-claims.show', $r->ClaimNo)], $r->OrigClaimNo, $r->CoverNo, $r->MStatusDesc ?: ($r->MStatusCode ?: 'Not available'), $r->ClaimCurrencyCode, number_format($r->ClaimAmt ?? 0, 2)])" />
         {{ $officialClaims->links() }}
     @endif

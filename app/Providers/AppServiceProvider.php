@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 use Livewire\Livewire;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
@@ -24,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Password::defaults(fn () => Password::min(12)->mixedCase()->numbers()->symbols()->rules(['regex:/[\p{S}\p{P}]/u']));
+
         Livewire::addPersistentMiddleware([RoleMiddleware::class, PermissionMiddleware::class, RoleOrPermissionMiddleware::class]);
 
         Gate::before(function ($user, string $ability) {

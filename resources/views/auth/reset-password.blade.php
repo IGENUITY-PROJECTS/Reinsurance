@@ -27,7 +27,7 @@
             <label for="password" class="block text-sm font-500 text-slate-700 mb-1.5">New password <span class="text-red-500">*</span></label>
             <div class="relative">
                 <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg>
-                <input id="password" type="password" name="password" placeholder="Min. 8 characters"
+                <input id="password" type="password" name="password" placeholder="Min. 12 characters"
                     autocomplete="new-password" autofocus required oninput="checkStrength(this.value)"
                     class="w-full pl-10 pr-11 py-2.5 text-sm border rounded-lg outline-none transition-all {{ $errors->has('password') ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100' }}">
                 <button type="button" onclick="togglePassword('password','eyeShow','eyeHide')"
@@ -45,6 +45,7 @@
                 </div>
                 <span id="strengthLabel" class="text-xs text-slate-400"></span>
             </div>
+            <p class="mt-2 text-xs text-slate-500">At least 12 characters, including uppercase and lowercase letters, a number and a symbol.</p>
             @error('password') <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p> @enderror
         </div>
 
@@ -92,10 +93,10 @@ function checkStrength(val) {
     if (!val) { wrap.classList.add('hidden'); return; }
     wrap.classList.remove('hidden');
     let score = 0;
-    if (val.length >= 8) score++;
-    if (/[A-Z]/.test(val)) score++;
+    if (val.length >= 12) score++;
+    if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
     if (/[0-9]/.test(val)) score++;
-    if (/[^A-Za-z0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9\s]/.test(val)) score++;
     if (score === 0) score = 1;
     label.textContent = labels[score - 1];
     bars.forEach((bar, i) => {

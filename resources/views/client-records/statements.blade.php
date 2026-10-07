@@ -2,7 +2,7 @@
 <div class="space-y-6"><h1 class="text-2xl font-semibold">Statement of Account</h1>
 <div class="flex flex-wrap gap-3"><a class="rounded-lg border bg-white px-4 py-3 {{ $kind === 'premiums' ? 'font-bold text-brand-700' : '' }}" href="{{ route($prefix.'.statements', ['kind' => 'premiums']) }}">Premiums payable</a><a class="rounded-lg border bg-white px-4 py-3 {{ $kind === 'claims' ? 'font-bold text-brand-700' : '' }}" href="{{ route($prefix.'.statements', ['kind' => 'claims']) }}">Claims receivable</a></div>
 <form method="GET" class="flex flex-wrap gap-3"><input type="hidden" name="kind" value="{{ $kind }}"><input aria-label="Search statement documents" name="q" value="{{ request('q') }}" placeholder="Document or risk reference" class="min-w-0 flex-1 rounded-lg border p-3"><select aria-label="Currency" name="currency" class="rounded-lg border p-3"><option value="">All currencies</option>@foreach($currencies as $currency)<option @selected(request('currency') === $currency)>{{ $currency }}</option>@endforeach</select><button class="rounded-lg bg-brand-700 px-4 text-white">Filter</button></form>
-<p class="text-sm text-slate-500">Amounts and settlement balances are shown as recorded in RBS, in each document's currency.</p>
+
 <x-record-table :headers="['Document', 'Cedant', 'Date', 'Risk reference', 'Currency', 'Amount', 'Settled', 'Pending', 'Reversed']" :rows="$records->map(fn($r) => [$r->DocumentNo, $r->CedantName ?: $r->CedantCode, $r->DocumentDate?->format('Y-m-d'), $r->RiskNoteRef, $r->CurrencyCode, number_format($r->MAmount ?? 0, 2), number_format($r->SettledAmount ?? 0, 2), number_format($r->PendingAmount ?? 0, 2), $r->Reversed])" />
 {{ $records->links() }}</div>
 @endcomponent

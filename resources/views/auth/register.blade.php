@@ -66,7 +66,7 @@
                             d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
                             clip-rule="evenodd" />
                     </svg>
-                    <input id="password" type="password" name="password" placeholder="Min. 8 characters"
+                    <input id="password" type="password" name="password" placeholder="Min. 12 characters"
                         autocomplete="new-password" required oninput="checkStrength(this.value)"
                         class="w-full pl-10 pr-11 py-2.5 text-sm border rounded-lg outline-none transition-all {{ $errors->has('password') ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100' }}">
                     <button type="button" onclick="togglePassword('password','eyeShow','eyeHide')"
@@ -98,7 +98,7 @@
                 @error('password')
                 <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p>
                 @else
-                <p class="mt-1.5 text-xs text-slate-400">At least 8 characters with letters and numbers.</p>
+                <p class="mt-1.5 text-xs text-slate-400">At least 12 characters, including uppercase and lowercase letters, a number and a symbol.</p>
                 @enderror
             </div>
 
@@ -154,10 +154,10 @@ function checkStrength(val) {
     if (!val) { wrap.classList.add('hidden'); return; }
     wrap.classList.remove('hidden');
     let score = 0;
-    if (val.length >= 8) score++;
-    if (/[A-Z]/.test(val)) score++;
+    if (val.length >= 12) score++;
+    if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
     if (/[0-9]/.test(val)) score++;
-    if (/[^A-Za-z0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9\s]/.test(val)) score++;
     if (score === 0) score = 1;
     label.textContent = labels[score - 1];
     bars.forEach((bar, i) => {

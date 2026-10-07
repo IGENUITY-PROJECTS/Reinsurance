@@ -80,7 +80,7 @@ class ClaimSubmission extends Model
         $claim = $this->claim;
         if (! $claim || $claim->CedCode !== $this->company_code
             || ($this->CoverNo && $claim->CoverNo !== $this->CoverNo)) {
-            return 'Awaiting RBS update';
+            return 'Submitted';
         }
 
         return $claim->MStatusDesc ?: ($claim->MStatusCode ?: 'Not available');
@@ -99,11 +99,6 @@ class ClaimSubmission extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(ClaimDocument::class, 'claim_submission_id');
-    }
-
-    public function feedback(): HasMany
-    {
-        return $this->hasMany(SubmissionFeedback::class, 'claim_submission_id')->orderBy('created_at')->orderBy('id');
     }
 
     public function statusHistories(): HasMany

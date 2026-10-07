@@ -11,10 +11,11 @@ use App\Models\ClaimSubmission;
 use App\Models\Company;
 use App\Models\Cover;
 use App\Models\CoverReinsurer;
+use App\Models\FeedbackConversation;
+use App\Models\FeedbackMessage;
 use App\Models\PremiumAdjustment;
 use App\Models\PremiumAdjustmentDocument;
 use App\Models\PremiumAdjustmentSubmission;
-use App\Models\SubmissionFeedback;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
@@ -35,7 +36,7 @@ class DemoSeeder extends Seeder
             'users', 'roles', 'permissions', 'companies', 'covers', 'cover_reinsurers',
             'claims', 'claim_submissions', 'claim_documents', 'claim_status_histories',
             'premium_adjustment_submissions', 'premium_adjustment_documents',
-            'premium_adjustments', 'submission_feedback', 'cedant_premiums', 'cedant_claim_payables',
+            'premium_adjustments', 'feedback_conversations', 'feedback_messages', 'cedant_premiums', 'cedant_claim_payables',
         ] as $table) {
             if (! Schema::hasTable($table)) {
                 throw new RuntimeException("Missing table {$table}. Run the pending migrations before DemoSeeder.");
@@ -176,10 +177,6 @@ class DemoSeeder extends Seeder
                             'from_status' => 'submitted', 'changed_by' => $admin->id, 'remarks' => 'Demo broker review.',
                         ]);
                     }
-                    $this->feedback('claim_submission_id', $submission->id, $owner->id,
-                        'Demo cedant: please confirm that you received my claim documents.');
-                    $this->feedback('claim_submission_id', $submission->id, $admin->id,
-                        'Demo broker: we have received your claim documents and will check them.');
                 }
             }
 
@@ -202,8 +199,6 @@ class DemoSeeder extends Seeder
                     'PremiumAdjRate' => 5, 'Posted' => 0, 'Committed' => 1, 'last_synced_at' => now(),
                 ]);
                 $this->document(PremiumAdjustmentDocument::class, 'premium_adjustment_submission_id', $adjustment->id, $owner->id, 'adjustment-'.$i);
-                $this->feedback('premium_adjustment_submission_id', $adjustment->id, $admin->id,
-                    'Demo broker: premium adjustment schedule received for this cover.');
             }
 
             foreach (range(1, 6) as $i) {
@@ -238,6 +233,20 @@ class DemoSeeder extends Seeder
                     // Do not invent a ClaimReference -> ClaimNo mapping.
                     'ClaimReference' => 'DEMO-STMT-REF'.$i, 'RequisitionNo' => 'DEMO-REQ'.$i,
                 ]));
+            }
+            foreach ([
+                ['DEMO-HELP-001', $cedar, 'How can I update my contact details?', 'Please help me update our office contact email.', 'Please send the new email address and we will guide you.'],
+                ['DEMO-HELP-002', $cedar, 'Statement download question', 'How can I access my statement of account?', 'Open Statement of Account from your portal menu.'],
+                ['DEMO-HELP-003', $lake, 'Portal feedback', 'Thank you. Could you explain where to find my covers?', 'Select My Policies / Covers from your home page.'],
+            ] as [$reference, $owner, $subject, $question, $answer]) {
+                $conversation = FeedbackConversation::where('reference', $reference)->first();
+                if (! $conversation) {
+                    $conversation = (new FeedbackConversation)->forceFill(['reference' => $reference, 'subject' => $subject, 'created_by' => $owner->id, 'company_code' => $owner->company?->CmpCode]);
+                    $conversation->save();
+                }
+                foreach ([[$owner->id, $question], [$admin->id, $answer]] as [$author, $message]) {
+                    $this->put(FeedbackMessage::class, ['feedback_conversation_id' => $conversation->id, 'author_id' => $author, 'message' => $message], []);
+                }
             }
         });
         $this->command?->info('Demo data and feedback conversations seeded. New demo accounts use password; existing passwords are preserved.');
@@ -276,13 +285,5 @@ class DemoSeeder extends Seeder
             'size_bytes' => Storage::disk('local')->size($path),
             'sha256' => hash('sha256', Storage::disk('local')->get($path)),
         ]);
-    }
-
-    private function feedback(string $parentColumn, int $submissionId, int $authorId, string $message): void
-    {
-        // Match only these fixtures; retain messages submitted through the portal.
-        $this->put(SubmissionFeedback::class, [
-            $parentColumn => $submissionId, 'author_id' => $authorId, 'message' => $message,
-        ], []);
     }
 }

@@ -43,11 +43,6 @@ class PremiumAdjustmentSubmission extends Model
         return $this->hasMany(PremiumAdjustmentDocument::class, 'premium_adjustment_submission_id');
     }
 
-    public function feedback(): HasMany
-    {
-        return $this->hasMany(SubmissionFeedback::class, 'premium_adjustment_submission_id')->orderBy('created_at')->orderBy('id');
-    }
-
     public function getRouteKeyName(): string
     {
         return 'submission_reference';

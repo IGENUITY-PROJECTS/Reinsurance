@@ -7,7 +7,6 @@ use App\Models\ClaimStatusHistory;
 use App\Models\ClaimSubmission;
 use App\Models\PremiumAdjustmentDocument;
 use App\Models\PremiumAdjustmentSubmission;
-use App\Models\SubmissionFeedback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -33,23 +32,6 @@ class SubmissionReviewController extends Controller
             }
         }
         abort(404);
-    }
-
-    public function feedback(Request $request, string $id)
-    {
-        if ($request->routeIs('admin.*')) {
-            abort_unless($request->user()->hasAnyRole(['admin', 'super-admin']), 403);
-        }
-        $submission = $this->submission($request, $id);
-        $input = $request->validate(['message' => ['required', 'string', 'max:5000']]);
-        (new SubmissionFeedback)->forceFill([
-            $submission instanceof ClaimSubmission ? 'claim_submission_id' : 'premium_adjustment_submission_id' => $submission->id,
-            'author_id' => $request->user()->id,
-            'message' => $input['message'],
-        ])->save();
-
-        return redirect()->route($request->routeIs('admin.*') ? 'admin.submissions.show' : 'client.submissions.show', $submission->submission_reference)
-            ->with('status', 'Your message has been sent.');
     }
 
     public function documents(Request $request, string $id)

@@ -58,7 +58,7 @@ Company codes, cover numbers and claim numbers retain their source meaning. Mirr
 
 ## Current scope
 
-Cedant records are restricted to the linked company. Claims are facultative, require supporting documents and use OrigClaimNo as the submitted/generated reference. Premium adjustments use CoverNo. Both sides have paginated Help & Feedback lists. Official claim status comes from linked mirrored claims; portal status controls remain deferred. Profit commissions remain disabled.
+Cedant records are restricted to the linked company. Claims are facultative, require supporting documents and use OrigClaimNo as the submitted/generated reference. Premium adjustments use CoverNo. Both sides have paginated general feedback conversations, independent of claims and adjustments. Official claim status comes from linked mirrored claims; portal status controls remain deferred. Profit commissions remain disabled.
 
 The RBS synchronisation process and automatic claim linking are still pending. A company-code registration check confirms a company exists; it does not verify that a registrant works for that company. Decide the invitation/approval process before public production registration.
 

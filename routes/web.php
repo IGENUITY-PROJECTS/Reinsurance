@@ -3,6 +3,7 @@
 use App\Http\Controllers\CedantRecordsController;
 use App\Http\Controllers\CedantSubmissionController;
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\SubmissionReviewController;
 use App\Livewire\Admin\Access\Index as AccessManagement;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
@@ -30,6 +31,13 @@ foreach (['admin' => ['auth', 'role_or_permission:super-admin|admin|view admin d
             Route::post('/premium-adjustments', [CedantSubmissionController::class, 'store'])->defaults('module', 'adjustments')->middleware('throttle:30,1')->name('adjustments.store');
             Route::get('/cover-options', [CedantSubmissionController::class, 'coverOptions'])->name('cover-options');
         }
+        Route::get('/help', [FeedbackController::class, 'index'])->name('help');
+        if ($prefix === 'client') {
+            Route::get('/help/new', [FeedbackController::class, 'create'])->name('help.create');
+            Route::post('/help', [FeedbackController::class, 'store'])->middleware('throttle:15,1')->name('help.store');
+        }
+        Route::get('/help/{reference}', [FeedbackController::class, 'show'])->name('help.show');
+        Route::post('/help/{reference}/replies', [FeedbackController::class, 'reply'])->middleware('throttle:30,1')->name('help.reply');
         Route::get('/policies', [CedantRecordsController::class, 'covers'])->name('policies');
         Route::get('/policies/{number}', [CedantRecordsController::class, 'cover'])->name('policies.show');
         Route::get('/statements', [CedantRecordsController::class, 'statements'])->name('statements');
@@ -37,14 +45,13 @@ foreach (['admin' => ['auth', 'role_or_permission:super-admin|admin|view admin d
         Route::get('/rbs-claims/{number}', [CedantRecordsController::class, 'officialClaim'])->name('rbs-claims.show');
         Route::get('/documents/{kind}/{id}', [CedantRecordsController::class, 'document'])->whereNumber('id')->name('documents.download');
         Route::get('/submissions', [CedantRecordsController::class, 'index'])->defaults('category', 'all')->name('submissions');
-        Route::post('/submissions/{id}/feedback', [SubmissionReviewController::class, 'feedback'])->middleware('throttle:30,1')->name('submissions.feedback');
         Route::post('/submissions/{id}/documents', [SubmissionReviewController::class, 'documents'])->middleware('throttle:15,1')->name('submissions.documents');
         if ($prefix === 'admin') {
             // Portal status review deferred; preserve handler for a future phase.
             // Route::post('/submissions/{id}/review', [SubmissionReviewController::class, 'review'])->middleware(['role:admin|super-admin', 'throttle:30,1'])->name('submissions.review');
         }
         Route::get('/submissions/{id}', [CedantRecordsController::class, 'show'])->name('submissions.show');
-        foreach (['claims' => 'claims', 'premium-adjustments' => 'adjustments', 'help' => 'help'] as $path => $category) {
+        foreach (['claims' => 'claims', 'premium-adjustments' => 'adjustments'] as $path => $category) {
             Route::get('/'.$path, [CedantRecordsController::class, 'index'])->defaults('category', $category)->name($category);
         }
     });

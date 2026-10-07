@@ -21,7 +21,7 @@ class Index extends Component
     {
         Gate::authorize('manage roles');
 
-        $firstRole = Role::query()->orderBy('name')->first();
+        $firstRole = Role::query()->when(! auth()->user()->hasRole('super-admin'), fn ($q) => $q->where('name', '!=', 'super-admin'))->orderBy('name')->first();
 
         if ($firstRole) {
             $this->selectRole($firstRole->id);
@@ -33,6 +33,7 @@ class Index extends Component
         Gate::authorize('manage roles');
 
         $this->roleName = str($this->roleName)->lower()->trim()->replace(' ', '-')->toString();
+        abort_if($this->roleName === 'super-admin' && ! auth()->user()->hasRole('super-admin'), 403);
 
         $this->validate([
             'roleName' => ['required', 'string', 'max:255', 'unique:roles,name'],
@@ -65,6 +66,7 @@ class Index extends Component
         Gate::authorize('manage roles');
 
         $role = Role::findOrFail($roleId);
+        $this->assertCanManageRole($role);
 
         $this->selectedRoleId = $role->id;
         $this->selectedPermissions = $role->permissions()->pluck('name')->all();
@@ -80,7 +82,9 @@ class Index extends Component
             'selectedPermissions.*' => ['string', 'exists:permissions,name'],
         ]);
 
-        Role::findOrFail($this->selectedRoleId)->syncPermissions($this->selectedPermissions);
+        $role = Role::findOrFail($this->selectedRoleId);
+        $this->assertCanManageRole($role);
+        $role->syncPermissions($this->selectedPermissions);
 
         session()->flash('status', 'Role permissions updated successfully.');
     }
@@ -99,6 +103,11 @@ class Index extends Component
         $this->selectedPermissions = [];
     }
 
+    private function assertCanManageRole(Role $role): void
+    {
+        abort_unless(auth()->user()->hasRole('super-admin') || $role->name !== 'super-admin', 403, 'Only a super-admin can manage the super-admin role.');
+    }
+
     public function render()
     {
         Gate::authorize('manage roles');
@@ -107,10 +116,15 @@ class Index extends Component
             ? Role::query()->with('permissions')->find($this->selectedRoleId)
             : null;
 
+        if ($selectedRole) {
+            $this->assertCanManageRole($selectedRole);
+        }
         $permissions = Permission::query()->orderBy('name')->get();
 
         return view('livewire.admin.access.index', [
-            'roles' => Role::query()->with('permissions')->orderBy('name')->get(),
+            'roles' => Role::query()->with('permissions')
+                ->when(! auth()->user()->hasRole('super-admin'), fn ($q) => $q->where('name', '!=', 'super-admin'))
+                ->orderBy('name')->get(),
             'permissions' => $permissions,
             'permissionGroups' => $permissions->groupBy(fn (Permission $permission) => str($permission->name)->before(' ')->headline()->toString()),
             'selectedRole' => $selectedRole,

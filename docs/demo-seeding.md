@@ -35,7 +35,7 @@ New example accounts all use password `password`:
 
 The fixture includes 2 cedants, 3 reinsurers, 4 covers, 12 cover reinsurer rows,
 6 portal claim submissions, 2 mirrored RBS claims, claim documents/status history,
-3 premium adjustment submissions with documents, 13 feedback messages on claims and adjustments, 3 mirrored adjustment rows, 6 premium statement rows and
+3 premium adjustment submissions with documents, 3 general feedback conversations and 6 messages, 3 mirrored adjustment rows, 6 premium statement rows and
 6 claim-payable statement rows. Source status codes marked DEMO are illustrative, not confirmed RBS codes.
 Statement rows exercise unpaid, part-paid and paid balances in USD and ZMW.
 Example exchange rates are fictional.
@@ -56,11 +56,11 @@ Broker approval/invitations and email verification are separate access controls 
 
 ## Portal workflows
 
-Both broker and cedant pages read database records. Cedants see only records belonging to their linked company, including private documents. Brokers can view submissions and documents. Claim tracking displays the linked mirrored RBS MStatusDesc, falling back to MStatusCode. Portal status labels, filters, history, review controls and the review route are commented out for now; stored columns and the review handler remain intact. No automatic RBS claim matching has been added. Cedants and brokers can exchange messages on claim and premium-adjustment submissions through Help & Feedback. Both sides can upload follow-up documents. Review status is separate from official RBS status. Draft submissions cannot be reviewed.
+Both broker and cedant pages read database records. Cedants see only records belonging to their linked company, including private documents. Brokers can view submissions and documents. Claim tracking displays the linked mirrored RBS MStatusDesc, falling back to MStatusCode. Portal status labels, filters, history, review controls and the review route are commented out for now; stored columns and the review handler remain intact. No automatic RBS claim matching has been added. Help & Feedback is general: cedants ask questions and brokers reply without selecting a claim or adjustment. Both sides can upload follow-up documents. Review status is separate from official RBS status. Draft submissions cannot be reviewed.
 
 Premium adjustments use CoverNo, with no user-facing or generated adjustment reference. A private internal submission token still identifies files and conversations. Multiple submissions and mirrored item rows may share a cover. The mirrored table preserves all 34 supplied REPremiumAdjustment fields. Source identity must be verified before configuring a sync upsert; DocumentNo or CoverNo alone must not be assumed unique. Cedant access to mirrored adjustments is checked through the owning cover; records whose covers have not synced stay hidden from cedants.
 
-Profit Commissions and static preview routes are disabled. Help & Feedback is available from both dashboards and menus. The broker page lists feedback in a paginated table; View opens the submission conversation for reading and replying. Messages are saved in submission_feedback and paginated on submission details and the feedback list. Cedant access follows company ownership; broker replies require the admin or super-admin role. DemoSeeder adds 13 sample feedback messages, with cedant questions and broker replies. Re-running it preserves real portal messages and avoids duplicate examples. DemoSeeder silently calls the shared RolesSeeder, so its console output focuses on demo data; ProductionRolesSeeder is a production-safe wrapper for the same role definitions and does not create business examples. The claim matcher remains removed. Linked demo claims are fixtures, not an automatic matching service.
+Profit Commissions and static preview routes remain disabled. Help & Feedback lists general conversations in paginated tables; View opens the question and replies. Messages use feedback_conversations and feedback_messages. Cedants see only their own conversations; broker replies require admin or super-admin. The old submission_feedback migration/model and submission-specific message forms/routes have been removed after rollback. DemoSeeder adds 3 general conversations and 6 messages, preserves real replies, and silently calls RolesSeeder. ProductionRolesSeeder creates only roles/permissions. Automatic claim matching remains pending. See [general feedback](general-feedback.md).
 
 ## Applying the October changes
 

@@ -1,4 +1,4 @@
-<section class="space-y-8">@if($company)<p class="text-sm font-semibold text-brand-700">{{ $company->CompanyName }} · {{ $company->CmpCode }}</p>@else<p class="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Your account has no linked company. Please contact your broker.</p>@endif
+<section class="space-y-8">@if($company)<p class="text-sm font-semibold text-brand-700">{{ $company->CompanyName }} Â· {{ $company->CmpCode }}</p>@else<p class="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">Your account has no linked company. Please contact your broker.</p>@endif
 <div class="grid gap-4 sm:grid-cols-3">@foreach($counts as $label => $count)<div class="rounded-xl border bg-white p-5"><p class="text-sm text-slate-500">{{ $label }}</p><p class="mt-2 text-2xl font-semibold">{{ $count }}</p></div>@endforeach</div>
     <div class="relative overflow-hidden rounded-3xl bg-brand-900 px-6 py-9 text-white sm:p-10">
         <p class="text-xs font-semibold uppercase tracking-widest text-brand-200">Your cedant portal</p>
@@ -14,7 +14,7 @@
                 ['route' => 'client.statements', 'title' => 'Statement of Account', 'description' => 'Find your statements and account information.', 'action' => 'View statements', 'icon' => 'M6 3h9l3 3v15H6V3 M9 10h6 M9 14h6 M9 18h4'],
                 ['route' => 'client.claims', 'title' => 'My Claims', 'description' => 'Your place to submit a claim and follow its progress.', 'action' => 'View claims', 'icon' => 'M9 5H5v16h14V5h-4 M9 3h6v4H9V3 M8 12h8 M8 16h5'],
                 ['route' => 'client.adjustments', 'title' => 'Premium Adjustments', 'description' => 'Submit adjustment schedules and track their status.', 'action' => 'View adjustments', 'icon' => 'M4 6h16 M4 12h16 M4 18h16'],
-                ['route' => 'client.help', 'title' => 'Help & Feedback', 'description' => 'Ask questions about your submissions and read broker replies.', 'action' => 'Get help', 'icon' => 'M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0 M8 11h.01 M12 11h.01 M16 11h.01'],
+                ['route' => 'client.help', 'title' => 'Help & Feedback', 'description' => 'Ask a question, share feedback and read broker replies.', 'action' => 'Get help', 'icon' => 'M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0 M8 11h.01 M12 11h.01 M16 11h.01'],
             ] as $item)
                 <a href="{{ route($item['route']) }}" class="group flex flex-col rounded-2xl border border-slate-200 bg-white p-6 transition hover:border-brand-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-600">
                     <span class="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
