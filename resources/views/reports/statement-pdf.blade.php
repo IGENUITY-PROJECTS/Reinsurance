@@ -22,7 +22,7 @@ tr { page-break-inside: avoid; } .number { text-align: right; } .muted { color: 
 <p class="muted">Generated {{ $generatedAt->format('Y-m-d H:i T') }}</p></div>
 <table><thead><tr>@foreach($report->headings() as $heading)<th>{{ $heading }}</th>@endforeach</tr></thead>
 <tbody>@foreach($records as $record)<tr>@foreach($report->row($record) as $i => $value)
-@php($numeric = in_array($i, $report->kind === 'claims' ? [10, 11, 12] : [7, 8, 9]))
+@php($numeric = $i >= $report->amountOffset())
 <td @class(['number' => $numeric])>{{ $numeric && $value !== null ? number_format($value, 2) : ($value ?? '—') }}</td>
 @endforeach</tr>@endforeach</tbody></table>
 <table class="totals"><thead><tr><th>Currency</th><th>Documents</th><th>Amount</th><th>Settled</th><th>Outstanding</th></tr></thead><tbody>

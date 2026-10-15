@@ -159,14 +159,19 @@ class CedantRecordsController extends Controller
     public function covers(Request $request)
     {
         $query = $this->owned(Cover::query(), 'CusCode', $this->code($request));
-        $filter = $request->validate(['q' => 'nullable|string|max:150']);
+        $filter = $request->validate(['q' => 'nullable|string|max:150', 'company' => 'nullable|string|max:50']);
+        $companies = (clone $query)->select('CusCode')->selectRaw('MAX(CusName) as company_name')
+            ->whereNotNull('CusCode')->groupBy('CusCode')->orderBy('CusCode')->get();
+        if (filled($filter['company'] ?? null)) {
+            $query->where('CusCode', $filter['company']);
+        }
         if (! empty($filter['q'])) {
             $term = '%'.$filter['q'].'%';
-            $query->where(fn ($q) => $q->where('CoverNo', 'like', $term)->orWhere('MRef', 'like', $term)->orWhere('InsName', 'like', $term));
+            $query->where(fn ($q) => $q->where('CoverNo', 'like', $term)->orWhere('MRef', 'like', $term)->orWhere('InsName', 'like', $term)->orWhere('CusCode', 'like', $term)->orWhere('CusName', 'like', $term));
         }
         $covers = $query->orderBy('CoverNo')->paginate(10)->withQueryString();
 
-        return $this->screen('client-records.covers', compact('covers'));
+        return $this->screen('client-records.covers', compact('covers', 'companies'));
     }
 
     public function cover(Request $request, string $number)

@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\AgedCedantClaimPayable;
+use App\Models\AgedCedantPremium;
 use App\Models\CedantClaimPayable;
 use App\Models\CedantPremium;
 use App\Models\Claim;
@@ -18,6 +20,7 @@ use App\Models\FeedbackTopicRoute;
 use App\Models\PremiumAdjustment;
 use App\Models\PremiumAdjustmentDocument;
 use App\Models\PremiumAdjustmentSubmission;
+use App\Models\ReinsurerPremiumPayable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
@@ -38,7 +41,7 @@ class DemoSeeder extends Seeder
             'departments', 'feedback_topic_routes', 'users', 'roles', 'permissions', 'companies', 'covers', 'cover_reinsurers',
             'claims', 'claim_submissions', 'claim_documents', 'claim_status_histories',
             'premium_adjustment_submissions', 'premium_adjustment_documents',
-            'premium_adjustments', 'feedback_conversations', 'feedback_messages', 'cedant_premiums', 'cedant_claim_payables',
+            'aged_cedant_claim_payables', 'aged_cedant_premiums', 'reinsurer_premium_payables', 'premium_adjustments', 'feedback_conversations', 'feedback_messages', 'cedant_premiums', 'cedant_claim_payables',
         ] as $table) {
             if (! Schema::hasTable($table)) {
                 throw new RuntimeException("Missing table {$table}. Run the pending migrations before DemoSeeder.");
@@ -252,6 +255,82 @@ class DemoSeeder extends Seeder
                     // Do not invent a ClaimReference -> ClaimNo mapping.
                     'ClaimReference' => 'DEMO-STMT-REF'.$i, 'RequisitionNo' => 'DEMO-REQ'.$i,
                 ]));
+            }
+            foreach (range(1, 6) as $i) {
+                $cover = $covers[(($i - 1) % 4) + 1];
+                $rein = $companies[$i % 2 ? 'DEMO-R001' : 'DEMO-R002'];
+                $amount = $i === 6 ? -2500 : $i * 10000;
+                $settled = $i === 6 ? 0 : ($i % 3 === 0 ? $amount : ($i % 3 === 1 ? 0 : $amount / 2));
+                $this->put(ReinsurerPremiumPayable::class, ['DocumentNo' => 'DEMO-RP'.$i, 'DetailID' => $i], [
+                    'DocumentDate' => '2026-09-20 00:00:00', 'DocumentDateNo' => 20260920,
+                    'AccountTypeCode' => 'DEMO-TYPE', 'AccountType' => 'Premium payable',
+                    'MAmount' => $amount, 'SettledAmount' => $settled, 'PendingAmount' => $amount - $settled,
+                    'CurrencyCode' => $cover->MCurrency, 'CurrencyName' => $cover->MCurrency === 'USD' ? 'US Dollar' : 'Zambia Kwacha',
+                    'ExchangeRate' => $cover->MCurrency === 'USD' ? 25 : 1,
+                    'FunctionalAmount' => $amount * ($cover->MCurrency === 'USD' ? 25 : 1),
+                    'RiskNoteRef' => $cover->MRef, 'Insured' => $cover->InsName, 'RiskDetails' => 'Demo commercial motor',
+                    'CategoryType' => 'FC', 'CategoryName' => 'Facultative Reinsurance',
+                    'ReinsureCode' => $rein->CmpCode, 'ReinsurerName' => $rein->CompanyName,
+                    'DocumentTypeCode' => 'DEMO-DOC', 'DocumentType' => 'Risk Note', 'CedantDoc' => 'DEMO-DN'.$i,
+                    'PercentPaid' => $amount > 0 ? $settled / $amount * 100 : 0,
+                    'CedantCode' => $cover->CusCode, 'CedantName' => $cover->CusName,
+                    'RequisitionNo' => 'DEMO-REQ'.$i, 'Reversed' => 0, 'ReversingDoc' => '', 'CRate' => 1, 'last_synced_at' => now(),
+                ]);
+            }
+            foreach (range(1, 6) as $i) {
+                $company = $companies[$i <= 3 ? 'DEMO-C001' : 'DEMO-C002'];
+                $amount = $i % 2 ? '-12277.30' : '12277.30';
+                $settled = $i === 6 ? $amount : '0';
+                $this->put(AgedCedantPremium::class, ['DocumentNo' => 'DEMO-AGED-P'.$i, 'DetailID' => $i], [
+                    'DocumentDate' => '2024-01-16 00:00:00', 'DocumentDateNo' => 20240116,
+                    'AccountTypeCode' => '', 'AccountType' => '', 'MAmount' => $amount,
+                    'SettledAmount' => $settled, 'PendingAmount' => $i === 6 ? '0' : $amount,
+                    'CurrencyCode' => $i <= 3 ? 'USD' : 'KES', 'CurrencyName' => '', 'ExchangeRate' => '1',
+                    'FunctionalAmount' => $amount, 'RiskNoteRef' => '', 'Insured' => '', 'RiskDetails' => '',
+                    'CategoryType' => '', 'CategoryName' => '', 'CedantCode' => $company->CmpCode, 'CedantName' => $company->CompanyName,
+                    'DocumentTypeCode' => $i % 2 ? 'DOC2' : 'DOC5', 'DocumentType' => $i % 2 ? 'Receipt' : 'Journal',
+                    'PercentPaid' => $i === 6 ? '100' : '0', 'Brokerage' => '0', 'ReinsurersAmount' => '0',
+                    'CollectionRemark' => '', 'Reversed' => 0, 'ReversingDoc' => '', 'CRate' => '1',
+                    'PostingSEQ' => $i, 'Revalued2021' => '0', 'RevaluationRate2021' => '0', 'Picked' => 0, 'last_synced_at' => now(),
+                ]);
+            }
+            foreach (range(1, 6) as $i) {
+                $cover = $covers[(($i - 1) % 4) + 1];
+                $rein = $companies[$i % 2 ? 'DEMO-R001' : 'DEMO-R002'];
+                $amount = $i === 6 ? -2500 : $i * 10000;
+                $settled = $i === 6 ? 0 : ($i % 3 === 0 ? $amount : ($i % 3 === 1 ? 0 : $amount / 2));
+                $this->put(ReinsurerPremiumPayable::class, ['DocumentNo' => 'DEMO-RP'.$i, 'DetailID' => $i], [
+                    'DocumentDate' => '2026-09-20 00:00:00', 'DocumentDateNo' => 20260920,
+                    'AccountTypeCode' => 'DEMO-TYPE', 'AccountType' => 'Premium payable',
+                    'MAmount' => $amount, 'SettledAmount' => $settled, 'PendingAmount' => $amount - $settled,
+                    'CurrencyCode' => $cover->MCurrency, 'CurrencyName' => $cover->MCurrency === 'USD' ? 'US Dollar' : 'Zambia Kwacha',
+                    'ExchangeRate' => $cover->MCurrency === 'USD' ? 25 : 1,
+                    'FunctionalAmount' => $amount * ($cover->MCurrency === 'USD' ? 25 : 1),
+                    'RiskNoteRef' => $cover->MRef, 'Insured' => $cover->InsName, 'RiskDetails' => 'Demo commercial motor',
+                    'CategoryType' => 'FC', 'CategoryName' => 'Facultative Reinsurance',
+                    'ReinsureCode' => $rein->CmpCode, 'ReinsurerName' => $rein->CompanyName,
+                    'DocumentTypeCode' => 'DEMO-DOC', 'DocumentType' => 'Risk Note', 'CedantDoc' => 'DEMO-DN'.$i,
+                    'PercentPaid' => $amount > 0 ? $settled / $amount * 100 : 0,
+                    'CedantCode' => $cover->CusCode, 'CedantName' => $cover->CusName,
+                    'RequisitionNo' => 'DEMO-REQ'.$i, 'Reversed' => 0, 'ReversingDoc' => '', 'CRate' => 1, 'last_synced_at' => now(),
+                ]);
+            }
+            foreach (range(1, 6) as $i) {
+                $company = $companies[$i <= 3 ? 'DEMO-C001' : 'DEMO-C002'];
+                $amount = $i % 2 ? '-12277.30' : '12277.30';
+                $settled = $i === 6 ? $amount : '0';
+                $this->put(AgedCedantClaimPayable::class, ['DocumentNo' => 'DEMO-AGED-C'.($i <= 2 ? '1' : $i), 'DetailID' => $i], [
+                    'DocumentDate' => '2025-01-22 00:00:00', 'DocumentDateNo' => 20250122,
+                    'AccountTypeCode' => '', 'AccountType' => '', 'MAmount' => $amount,
+                    'SettledAmount' => $settled, 'PendingAmount' => $i === 6 ? '0' : $amount,
+                    'CurrencyCode' => $i <= 3 ? 'USD' : 'KES', 'CurrencyName' => '', 'ExchangeRate' => '1',
+                    'FunctionalAmount' => $amount, 'RiskNoteRef' => '', 'Insured' => '', 'RiskDetails' => '',
+                    'CategoryType' => '', 'CategoryName' => '', 'CedantCode' => $company->CmpCode, 'CedantName' => $company->CompanyName,
+                    'DocumentTypeCode' => $i % 2 ? 'DOC3' : 'DOC5', 'DocumentType' => $i % 2 ? 'Payment' : 'Journal',
+                    'PercentPaid' => $i === 6 ? '100' : '0', 'DOL' => null, 'DOLNo' => 0, 'ClaimRefReinsured' => '', 'ClaimReference' => '', 'RequisitionNo' => '',
+                    'CollectionRemark' => '', 'Reversed' => 0, 'ReversingDoc' => '', 'CRate' => '1',
+                    'PostingSeq' => $i <= 2 ? 259 : $i, 'Revalued2021' => '0', 'RevaluationRate2021' => '0', 'Picked' => 0, 'last_synced_at' => now(),
+                ]);
             }
             foreach ([
                 ['DEMO-HELP-001', $cedar, 'How can I update my contact details?', 'Please help me update our office contact email.', 'Please send the new email address and we will guide you.'],

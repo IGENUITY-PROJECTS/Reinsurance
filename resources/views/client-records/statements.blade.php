@@ -2,7 +2,7 @@
 <div class="space-y-6">
     <div><h1 class="text-2xl font-semibold">Statements</h1><p class="mt-1 text-sm text-slate-500">{{ $report->title() }}</p><p class="mt-2 text-xs text-slate-500">Fully settled documents are excluded.</p></div>
     <div class="flex flex-wrap gap-3">
-        @foreach(['premiums' => 'Premiums payable', 'claims' => 'Claims receivable'] as $kind => $label)
+        @foreach($report->kinds() as $kind => $label)
             <a class="rounded-xl border bg-white px-4 py-3 {{ $report->kind === $kind ? 'border-brand-700 font-semibold text-brand-700' : 'text-slate-600' }}" href="{{ route($prefix.'.statements', array_merge(request()->only(['from', 'to', 'company', 'currency']), ['kind' => $kind])) }}">{{ $label }}</a>
         @endforeach
     </div>
@@ -21,7 +21,7 @@
     <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="text-sm text-slate-600"><p class="font-semibold">{{ number_format($records->total()) }} {{ Str::plural('document', $records->total()) }}</p><p>{{ $report->period() }}</p></div>
         <div class="flex flex-wrap gap-3">
-            @if(!$broker)<a class="rounded-lg border px-4 py-3 text-sm text-brand-700" href="{{ route('client.help.create', array_merge(request()->only(['from', 'to', 'currency', 'q']), ['topic' => $report->kind])) }}">Ask about this statement</a>@endif
+            @if(!$broker && $report->supportsFeedbackContext())<a class="rounded-lg border px-4 py-3 text-sm text-brand-700" href="{{ route('client.help.create', array_merge(request()->only(['from', 'to', 'currency', 'q']), ['topic' => $report->kind])) }}">Ask about this statement</a>@endif
             @php($canDownload = $records->total() > 0 && filled($report->filters['from'] ?? null) && filled($report->filters['to'] ?? null))
             @foreach(['xlsx' => 'Download Excel', 'pdf' => 'Download PDF'] as $format => $label)
                 @if($canDownload)<a class="rounded-lg border border-brand-700 bg-white px-4 py-3 text-sm font-semibold text-brand-700" href="{{ route($prefix.'.statements.download', array_merge($report->filters, ['format' => $format])) }}">{{ $label }}</a>
@@ -33,7 +33,7 @@
     @if($records->total() === 0)
         <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500" role="status">No records found for the selected period.</div>
     @else
-        <x-record-table :headers="$broker ? $report->headings() : array_merge($report->headings(), ['Help'])" :rows="$records->map(function ($record) use ($report, $broker) { $row = $report->row($record); $offset = $report->kind === 'claims' ? 10 : 7; foreach ([$offset, $offset + 1, $offset + 2] as $i) { $row[$i] = $row[$i] === null ? '—' : number_format($row[$i], 2); } if (!$broker) $row[] = ['label' => 'Ask a question', 'url' => route('client.help.create', array_merge(request()->only(['from', 'to', 'currency', 'q']), ['topic' => $report->kind, 'statement_document_id' => $record->id]))]; return $row; })" />
+        <x-record-table :headers="($broker || !$report->supportsFeedbackContext()) ? $report->headings() : array_merge($report->headings(), ['Help'])" :rows="$records->map(function ($record) use ($report, $broker) { $row = $report->row($record); $offset = $report->amountOffset(); foreach ([$offset, $offset + 1, $offset + 2] as $i) { $row[$i] = $row[$i] === null ? '—' : number_format($row[$i], 2); } if (!$broker && $report->supportsFeedbackContext()) $row[] = ['label' => 'Ask a question', 'url' => route('client.help.create', array_merge(request()->only(['from', 'to', 'currency', 'q']), ['topic' => $report->kind, 'statement_document_id' => $record->id]))]; return $row; })" />
         {{ $records->links() }}
         <div class="space-y-3"><h2 class="text-lg font-semibold">Totals by currency</h2>
             <x-record-table :headers="['Currency', 'Documents', 'Amount', 'Settled', 'Outstanding']" :rows="$totals->map(fn ($total) => [$total->CurrencyCode ?: 'Unspecified', number_format($total->document_count), number_format($total->amount ?? 0, 2), number_format($total->settled ?? 0, 2), number_format($total->pending ?? 0, 2)])" />

@@ -37,8 +37,12 @@ class StatementRecordsSheet extends StatementValueBinder implements FromQuery, W
     {
         $row = $this->report->row($record);
         $row[1] = $record->DocumentDate ? Date::dateTimeToExcel($record->DocumentDate) : null;
-        if ($this->report->kind === 'claims') {
+        if ($this->report->isClaims()) {
             $row[8] = $record->DOL ? Date::dateTimeToExcel($record->DOL) : null;
+        }
+
+        for ($i = $this->report->amountOffset(); $i < count($row); $i++) {
+            $row[$i] = $row[$i] === null ? null : (float) $row[$i];
         }
 
         return $row;
@@ -57,7 +61,7 @@ class StatementRecordsSheet extends StatementValueBinder implements FromQuery, W
             $sheet->getRowDimension(1)->setRowHeight(28);
             foreach ($this->headings() as $i => $heading) {
                 $column = Coordinate::stringFromColumnIndex($i + 1);
-                $sheet->getColumnDimension($column)->setWidth(in_array($heading, ['Cedant', 'Insured', 'Risk reference']) ? 34 : 20);
+                $sheet->getColumnDimension($column)->setWidth(in_array($heading, ['Cedant', 'Insured', 'Risk reference', 'Reinsurer']) ? 34 : 20);
                 if (in_array($heading, ['Amount', 'Settled', 'Outstanding'])) {
                     $sheet->getStyle($column.'2:'.$column.$lastRow)->getNumberFormat()->setFormatCode('#,##0.00;[Red](#,##0.00)');
                 }

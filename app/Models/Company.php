@@ -69,6 +69,26 @@ class Company extends Model
         return $this->hasMany(CedantClaimPayable::class, 'CedantCode', 'CmpCode');
     }
 
+    public function premiumPayablesAsReinsurer(): HasMany
+    {
+        return $this->hasMany(ReinsurerPremiumPayable::class, 'ReinsureCode', 'CmpCode');
+    }
+
+    public function premiumPayablesAsCedant(): HasMany
+    {
+        return $this->hasMany(ReinsurerPremiumPayable::class, 'CedantCode', 'CmpCode');
+    }
+
+    public function agedPremiums(): HasMany
+    {
+        return $this->hasMany(AgedCedantPremium::class, 'CedantCode', 'CmpCode');
+    }
+
+    public function agedClaimPayables(): HasMany
+    {
+        return $this->hasMany(AgedCedantClaimPayable::class, 'CedantCode', 'CmpCode');
+    }
+
     public function users(): HasMany
     {
         return $this->hasMany(User::class);

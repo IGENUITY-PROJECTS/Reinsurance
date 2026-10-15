@@ -51,7 +51,10 @@ For deployment, configure APP_ENV=production, APP_DEBUG=false, HTTPS, real datab
 | RECoverReinsurers | cover_reinsurers |
 | REClaims | claims |
 | ARDebtorsPremiums | cedant_premiums |
+| ARDebtorsPremiumsAGED | aged_cedant_premiums |
+| APCreditorsClaimsAGED | aged_cedant_claim_payables |
 | APCreditorsClaims | cedant_claim_payables |
+| APCreditorsPremiums | reinsurer_premium_payables |
 | REPremiumAdjustment | premium_adjustments |
 
 Company codes, cover numbers and claim numbers retain their source meaning. Mirror tables allow independent sync order. Portal submissions and private documents are separate from mirrored records.
