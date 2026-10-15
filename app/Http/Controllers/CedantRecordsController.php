@@ -9,6 +9,7 @@ use App\Models\Cover;
 use App\Models\PremiumAdjustment;
 use App\Models\PremiumAdjustmentDocument;
 use App\Models\PremiumAdjustmentSubmission;
+use App\Queries\CedantModuleRecords;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +18,7 @@ class CedantRecordsController extends Controller
 {
     private function broker(): bool
     {
-        return request()->routeIs('admin.*') && (auth()->user()->hasAnyRole(['admin', 'super-admin']) || auth()->user()->can('view admin dashboard'));
+        return request()->routeIs('admin.*') && auth()->user()->hasAnyRole(['admin', 'super-admin']);
     }
 
     private function screen(string $view, array $data = [])
@@ -87,21 +88,23 @@ class CedantRecordsController extends Controller
             $query->whereDate('created_at', '<=', $filter['to']);
         }
         $items = $query->orderByDesc('created_at')->orderBy('submission_reference')->paginate(10)->withQueryString();
-        $linkedClaims = Claim::whereIn('ClaimNo', $items->getCollection()->pluck('claim_number')->filter())
-            ->get()->keyBy('ClaimNo');
-        $items->through(fn ($r) => [
-            'id' => $r->reference, 'route_key' => $r->submission_reference,
-            'title' => $r->title ?: $r->type, 'policy' => $r->policy,
-            'type' => $r->type,
-            'status' => $r->type !== 'Claim' ? 'Not available'
-                : (($linked = $linkedClaims->get($r->claim_number))
-                    && $linked->CedCode === $r->company_code
-                    && (! $r->policy || $linked->CoverNo === $r->policy)
-                    ? ($linked->MStatusDesc ?: ($linked->MStatusCode ?: 'Not available'))
-                    : 'Submitted'),
-            'company' => $r->company_code,
-            'date' => substr((string) $r->created_at, 0, 10),
-        ]);
+        $linkedClaims = Claim::whereIn('CedCode', $items->getCollection()->pluck('company_code'))
+            ->whereIn(DB::raw('LTRIM(RTRIM(OrigClaimNo))'), $items->getCollection()->pluck('reference')->filter()->map(fn ($reference) => trim($reference)))
+            ->get()->groupBy(fn ($claim) => json_encode([$claim->CedCode, trim((string) $claim->OrigClaimNo)]));
+        $items->through(function ($r) use ($linkedClaims) {
+            $matches = $linkedClaims->get(json_encode([$r->company_code, trim((string) $r->reference)]), collect());
+            $claim = $matches->count() === 1 ? $matches->first() : null;
+
+            return [
+                'id' => $r->reference, 'route_key' => $r->submission_reference,
+                'title' => $r->title ?: $r->type, 'policy' => $r->policy,
+                'type' => $r->type,
+                'status' => $r->type !== 'Claim' ? 'Not available'
+                    : ($claim ? ($claim->MStatusDesc ?: ($claim->MStatusCode ?: 'Not available')) : 'Submitted'),
+                'company' => $r->company_code,
+                'date' => substr((string) $r->created_at, 0, 10),
+            ];
+        });
         $officialClaims = $category === 'claims'
             ? $this->owned(Claim::query(), 'CedCode', $code)->when($this->broker() && ! empty($filter['company']), fn ($q) => $q->where('CedCode', $filter['company']))->orderBy('ClaimNo')->paginate(10, ['*'], 'rbs_page')->withQueryString()
             : null;
@@ -119,42 +122,7 @@ class CedantRecordsController extends Controller
             'company' => 'nullable|string|max:50', 'q' => 'nullable|string|max:150',
             'from' => 'nullable|date', 'to' => 'nullable|date|after_or_equal:from',
         ]);
-        $date = fn ($column) => match (DB::connection()->getDriverName()) {
-            'sqlsrv' => "CONVERT(varchar(10), {$column}, 23)",
-            'mysql', 'mariadb' => "DATE_FORMAT({$column}, '%Y-%m-%d')",
-            'pgsql' => "TO_CHAR({$column}, 'YYYY-MM-DD')",
-            default => "strftime('%Y-%m-%d', {$column})",
-        };
-        if ($category === 'claims') {
-            $submitted = $this->owned(DB::table('claim_submissions as s'), 's.company_code', $code)
-                ->leftJoin('claims as c', function ($join) {
-                    $join->on('c.ClaimNo', '=', 's.ClaimNo')->on('c.CedCode', '=', 's.company_code')
-                        ->where(function ($q) {
-                            $q->whereColumn('c.CoverNo', 's.CoverNo')->orWhereNull('s.CoverNo');
-                        });
-                })
-                ->selectRaw('s.submission_reference as record_key, s.OrigClaimNo as reference, s.CoverNo as cover, s.InsuredName as label, s.company_code, '.$date('COALESCE(s.submitted_at, s.created_at)')." as display_date, COALESCE(NULLIF(c.MStatusDesc, ''), NULLIF(c.MStatusCode, ''), 'Submitted') as status, c.ClaimCurrencyCode as currency, c.ClaimAmt as amount, 'submission' as record_kind, c.ClaimNo as claim_number");
-            $registeredDate = "CASE WHEN c.DateRegistered LIKE '________' THEN SUBSTRING(c.DateRegistered, 1, 4) || '-' || SUBSTRING(c.DateRegistered, 5, 2) || '-' || SUBSTRING(c.DateRegistered, 7, 2) WHEN c.DateRegistered LIKE '____-__-__%' THEN SUBSTRING(c.DateRegistered, 1, 10) ELSE ".$date('c.created_at').' END';
-            if (DB::connection()->getDriverName() === 'sqlsrv') {
-                $registeredDate = str_replace(' || ', ' + ', $registeredDate);
-            } elseif (in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'])) {
-                $registeredDate = "CASE WHEN c.DateRegistered LIKE '________' THEN CONCAT(SUBSTRING(c.DateRegistered,1,4), '-', SUBSTRING(c.DateRegistered,5,2), '-', SUBSTRING(c.DateRegistered,7,2)) WHEN c.DateRegistered LIKE '____-__-__%' THEN SUBSTRING(c.DateRegistered,1,10) ELSE ".$date('c.created_at').' END';
-            }
-            $mirrored = $this->owned(DB::table('claims as c'), 'c.CedCode', $code)
-                ->whereNotExists(function ($q) {
-                    $q->selectRaw('1')->from('claim_submissions as s')
-                        ->whereColumn('s.ClaimNo', 'c.ClaimNo')->whereColumn('s.company_code', 'c.CedCode')
-                        ->where(fn ($q) => $q->whereColumn('s.CoverNo', 'c.CoverNo')->orWhereNull('s.CoverNo'));
-                })
-                ->selectRaw("c.ClaimNo as record_key, COALESCE(NULLIF(c.OrigClaimNo, ''), c.ClaimNo) as reference, c.CoverNo as cover, c.InsuredName as label, c.CedCode as company_code, {$registeredDate} as display_date, COALESCE(NULLIF(c.MStatusDesc, ''), NULLIF(c.MStatusCode, ''), 'Not available') as status, c.ClaimCurrencyCode as currency, c.ClaimAmt as amount, 'claim' as record_kind, c.ClaimNo as claim_number");
-        } else {
-            $submitted = $this->owned(DB::table('premium_adjustment_submissions as s'), 's.company_code', $code)
-                ->selectRaw('s.submission_reference as record_key, s.CoverNo as reference, s.CoverNo as cover, s.details as label, s.company_code, '.$date('COALESCE(s.submitted_at, s.created_at)')." as display_date, 'Submitted' as status, NULL as currency, NULL as amount, 'submission' as record_kind, NULL as claim_number");
-            // Keep every source item: CoverNo alone cannot identify a submission or adjustment document.
-            $mirrored = $this->owned(DB::table('premium_adjustments as a')->leftJoin('covers as c', 'c.CoverNo', '=', 'a.CoverNo'), 'c.CusCode', $code)
-                ->selectRaw('CAST(a.id AS VARCHAR(50)) as record_key, a.DocumentNo as reference, a.CoverNo as cover, COALESCE(a.ItemDesc, a.ItemNo) as label, COALESCE(c.CusCode, a.CedantAccountNo) as company_code, '.$date('a.DocumentDate')." as display_date, 'Not available' as status, a.DocCurrency as currency, a.PremiumComputed as amount, 'adjustment' as record_kind, NULL as claim_number");
-        }
-        $query = DB::query()->fromSub($submitted->unionAll($mirrored), 'records');
+        $query = app(CedantModuleRecords::class)->query($category, $this->broker() ? null : $code);
         $companies = (clone $query)->distinct()->orderBy('company_code')->pluck('company_code');
         if ($this->broker() && ! empty($filter['company'])) {
             $query->where('company_code', $filter['company']);
@@ -178,14 +146,12 @@ class CedantRecordsController extends Controller
         $isClaim = $submission !== null;
         $submission ??= $this->owned(PremiumAdjustmentSubmission::query(), 'company_code', $code)
             ->where('submission_reference', $id)->firstOrFail();
-        $official = $isClaim && $submission->ClaimNo
-            ? Claim::where('CedCode', $submission->company_code)->where('ClaimNo', $submission->ClaimNo)
-                ->when($submission->CoverNo, fn ($q) => $q->where('CoverNo', $submission->CoverNo))->first()
-            : null;
+        $matches = $isClaim ? $submission->matchingClaims()->limit(2)->get() : collect();
+        $official = $matches->count() === 1 ? $matches->first() : null;
 
         $documents = $submission->documents()->orderByDesc('id')->paginate(10, ['*'], 'documents_page')->withQueryString();
         $history = $isClaim ? $submission->statusHistories()->reorder()->with('changedBy')->orderByDesc('changed_at')->orderByDesc('id')->paginate(10, ['*'], 'history_page')->withQueryString() : null;
-        $officialAdjustments = ! $isClaim ? $this->adjustments($request)->where('CoverNo', $submission->CoverNo)->whereHas('cover', fn ($q) => $q->where('CusCode', $submission->company_code))->orderByDesc('DocumentDate')->orderBy('id')->paginate(10, ['*'], 'rbs_page')->withQueryString() : null;
+        $officialAdjustments = ! $isClaim ? $this->adjustments($request)->forCompany($submission->company_code)->where('CoverNo', $submission->CoverNo)->orderByDesc('DocumentDate')->orderBy('id')->paginate(10, ['*'], 'rbs_page')->withQueryString() : null;
 
         return $this->screen('client-records.submission', compact('submission', 'isClaim', 'official', 'documents', 'history', 'officialAdjustments'));
     }
@@ -216,7 +182,12 @@ class CedantRecordsController extends Controller
     {
         $claim = $this->owned(Claim::query(), 'CedCode', $this->code($request))->where('ClaimNo', $number)->firstOrFail();
 
-        return $this->screen('client-records.claim', compact('claim'));
+        $submission = ClaimSubmission::where('company_code', $claim->CedCode)
+            ->whereRaw('LTRIM(RTRIM(OrigClaimNo)) = ?', [trim((string) $claim->OrigClaimNo)])
+            ->when(trim((string) $claim->OrigClaimNo) === '', fn ($q) => $q->whereRaw('1 = 0'))->first();
+        $documents = $submission?->documents()->orderByDesc('id')->paginate(10)->withQueryString();
+
+        return $this->screen('client-records.claim', compact('claim', 'submission', 'documents'));
     }
 
     public function officialAdjustment(Request $request, int $id)
@@ -230,9 +201,9 @@ class CedantRecordsController extends Controller
     {
         $query = PremiumAdjustment::query();
         if (! $this->broker()) {
-            $query->whereHas('cover', fn ($q) => $this->owned($q, 'CusCode', $this->code($request)));
+            $query->forCompany($this->code($request));
         } elseif ($request->filled('company')) {
-            $query->whereHas('cover', fn ($q) => $q->where('CusCode', $request->string('company')->toString()));
+            $query->forCompany($request->string('company')->toString());
         }
 
         return $query;

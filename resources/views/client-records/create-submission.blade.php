@@ -92,16 +92,16 @@
                 </label>
                 --}}
             @else
-                <label class="block text-sm font-medium">Adjustment details <span class="text-red-600">*</span>
-                    <textarea name="details" required maxlength="10000" rows="5" class="mt-2 block w-full rounded-lg border border-slate-300 p-3">{{ old('details') }}</textarea>
+                <label class="block text-sm font-medium">Adjustment details <span class="font-normal text-slate-500">(optional)</span>
+                    <textarea name="details" maxlength="10000" rows="5" class="mt-2 block w-full rounded-lg border border-slate-300 p-3">{{ old('details') }}</textarea>
                 </label>
             @endif
         </section>
 
         <section class="space-y-3">
             <h2 class="font-semibold">3. Supporting documents</h2>
-            <label for="documents" class="block text-sm font-medium">{{ $module === 'claims' ? 'Supporting documents (required)' : 'Documents (optional)' }}</label>
-            <input id="documents" name="documents[]" type="file" multiple @required($module === 'claims')
+            <label for="documents" class="block text-sm font-medium">Supporting documents (required)</label>
+            <input id="documents" name="documents[]" type="file" multiple required
                 accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt" class="block w-full rounded-lg border border-slate-300 p-3 text-sm">
             <p class="text-xs text-slate-500">PDF, images, Word, Excel or text files. Up to 10 files, 10 MB each.</p>
         </section>

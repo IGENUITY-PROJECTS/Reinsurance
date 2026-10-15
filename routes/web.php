@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Controllers\AccountApprovalController;
 use App\Http\Controllers\CedantRecordsController;
 use App\Http\Controllers\CedantSubmissionController;
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\StatementReportController;
 use App\Http\Controllers\SubmissionReviewController;
+use App\Http\Controllers\UserAccessController;
 use App\Livewire\Admin\Access\Index as AccessManagement;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\Users\Index as UserManagement;
@@ -15,14 +18,22 @@ use App\Livewire\Frontend\Home;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', Home::class)->name('home');
-Route::get('/dashboard', DashboardRedirectController::class)->middleware('auth')->name('dashboard');
+Route::get('/account/pending', [AccountApprovalController::class, 'show'])->middleware(['auth', 'verified'])->name('account.pending');
+Route::post('/account/renew', [AccountApprovalController::class, 'renew'])->middleware(['auth', 'verified', 'throttle:3,1'])->name('account.renew');
 
-foreach (['admin' => ['auth', 'role_or_permission:super-admin|admin|view admin dashboard'], 'client' => ['auth', 'role:client']] as $prefix => $middleware) {
+Route::get('/dashboard', DashboardRedirectController::class)->middleware(['auth', 'verified', 'portal.approved'])->name('dashboard');
+
+foreach (['admin' => ['auth', 'verified', 'portal.approved', 'role:super-admin|admin'], 'client' => ['auth', 'verified', 'portal.approved', 'role:client']] as $prefix => $middleware) {
     Route::middleware($middleware)->prefix($prefix)->name($prefix.'.')->group(function () use ($prefix) {
         Route::get('/dashboard', $prefix === 'admin' ? AdminDashboard::class : ClientDashboard::class)->name('dashboard');
         if ($prefix === 'admin') {
+            Route::get('/departments', [DepartmentController::class, 'index'])->middleware('role:super-admin')->name('departments.index');
+            Route::post('/departments', [DepartmentController::class, 'store'])->middleware('role:super-admin')->name('departments.store');
+            Route::post('/departments/routing', [DepartmentController::class, 'routing'])->middleware('role:super-admin')->name('departments.routing');
+            Route::patch('/departments/{id}', [DepartmentController::class, 'update'])->whereNumber('id')->middleware('role:super-admin')->name('departments.update');
+            Route::patch('/companies/{id}/user-limit', [UserAccessController::class, 'update'])->whereNumber('id')->middleware('role:super-admin')->name('companies.limit');
             Route::get('/users', UserManagement::class)->middleware('can:manage users')->name('users.index');
-            Route::get('/access', AccessManagement::class)->middleware('can:manage roles')->name('access.index');
+            Route::get('/access', AccessManagement::class)->middleware('role:super-admin')->name('access.index');
         } else {
             Route::get('/profile', ClientProfile::class)->name('profile.edit');
             Route::get('/submissions/new', [CedantSubmissionController::class, 'create'])->defaults('module', 'claims')->name('submissions.create');
@@ -34,8 +45,12 @@ foreach (['admin' => ['auth', 'role_or_permission:super-admin|admin|view admin d
         }
         Route::get('/help', [FeedbackController::class, 'index'])->name('help');
         if ($prefix === 'client') {
+            Route::get('/help/documents', [FeedbackController::class, 'documents'])->middleware('throttle:60,1')->name('help.documents');
             Route::get('/help/new', [FeedbackController::class, 'create'])->name('help.create');
             Route::post('/help', [FeedbackController::class, 'store'])->middleware('throttle:15,1')->name('help.store');
+        }
+        if ($prefix === 'admin') {
+            Route::post('/help/{reference}/assign', [FeedbackController::class, 'assign'])->middleware('role:super-admin')->name('help.assign');
         }
         Route::get('/help/{reference}', [FeedbackController::class, 'show'])->name('help.show');
         Route::post('/help/{reference}/replies', [FeedbackController::class, 'reply'])->middleware('throttle:30,1')->name('help.reply');

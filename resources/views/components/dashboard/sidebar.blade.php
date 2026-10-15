@@ -5,7 +5,7 @@
         @foreach(['admin.dashboard' => 'Overview', 'admin.submissions' => 'All submissions', 'admin.policies' => 'Policies / Covers', 'admin.statements' => 'Statements', 'admin.claims' => 'Claims', 'admin.adjustments' => 'Premium Adjustments', 'admin.help' => 'Help & Feedback'] as $route => $label)
             <a href="{{ route($route) }}" @if(request()->routeIs($route)) aria-current="page" @endif class="block rounded-xl px-3 py-3 font-medium {{ request()->routeIs($route) ? 'bg-white text-brand-900' : 'text-brand-100 hover:bg-white/10' }}">{{ $label }}</a>
         @endforeach
-        @can('manage users')<a href="{{ route('admin.users.index') }}" class="block rounded-xl px-3 py-3 text-brand-100 hover:bg-white/10">User Management</a>@endcan
-        @can('manage roles')<a href="{{ route('admin.access.index') }}" class="block rounded-xl px-3 py-3 text-brand-100 hover:bg-white/10">Roles & Permissions</a>@endcan
+        @can('manage users')<a href="{{ route('admin.users.index') }}" class="block rounded-xl px-3 py-3 text-brand-100 hover:bg-white/10">Users</a>@endcan
+        @role('super-admin')<a href="{{ route('admin.departments.index') }}" class="block rounded-xl px-3 py-3 text-brand-100 hover:bg-white/10">Departments</a><a href="{{ route('admin.access.index') }}" class="block rounded-xl px-3 py-3 text-brand-100 hover:bg-white/10">Roles & Permissions</a>@endrole
     </nav>
 </aside>

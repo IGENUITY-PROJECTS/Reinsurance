@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\HasMany;
-
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Company extends Model
 {
@@ -40,7 +39,7 @@ class Company extends Model
     protected function casts(): array
     {
         return [
-            'MActive' => 'integer',
+            'MActive' => 'integer', 'portal_user_limit' => 'integer',
             'last_synced_at' => 'datetime',
         ];
     }

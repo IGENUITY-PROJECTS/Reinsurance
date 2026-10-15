@@ -8,7 +8,7 @@ class ProductionRolesSeeder extends Seeder
 {
     public function run(): void
     {
-        // Production entry point: shared role defaults, no demo users or business records.
-        $this->call(RolesSeeder::class);
+        // Production entry point: roles, permissions and one default department; no accounts or business examples.
+        $this->call([RolesSeeder::class, DepartmentsSeeder::class]);
     }
 }

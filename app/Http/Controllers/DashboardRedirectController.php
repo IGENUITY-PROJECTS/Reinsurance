@@ -11,7 +11,7 @@ class DashboardRedirectController extends Controller
     {
         $user = $request->user();
 
-        if ($user->hasAnyRole(['super-admin', 'admin']) || $user->can('view admin dashboard')) {
+        if ($user->hasAnyRole(['super-admin', 'admin'])) {
             return redirect()->route('admin.dashboard');
         }
 

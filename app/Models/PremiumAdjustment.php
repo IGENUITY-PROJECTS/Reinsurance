@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -35,6 +36,13 @@ class PremiumAdjustment extends Model
             'LastMaintained' => 'datetime',
             'last_synced_at' => 'datetime',
         ];
+    }
+
+    public function scopeForCompany(Builder $query, string $code): Builder
+    {
+        return $query->when($code === '', fn ($q) => $q->whereRaw('1 = 0'))
+            ->where(fn ($q) => $q->whereHas('cover', fn ($cover) => $cover->where('CusCode', $code))
+                ->orWhere(fn ($missing) => $missing->whereDoesntHave('cover')->where('CedantAccountNo', $code)));
     }
 
     public function cover(): BelongsTo

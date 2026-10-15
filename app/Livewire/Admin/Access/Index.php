@@ -20,6 +20,7 @@ class Index extends Component
     public function mount(): void
     {
         Gate::authorize('manage roles');
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
 
         $firstRole = Role::query()->when(! auth()->user()->hasRole('super-admin'), fn ($q) => $q->where('name', '!=', 'super-admin'))->orderBy('name')->first();
 
@@ -31,6 +32,7 @@ class Index extends Component
     public function createRole(): void
     {
         Gate::authorize('manage roles');
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
 
         $this->roleName = str($this->roleName)->lower()->trim()->replace(' ', '-')->toString();
         abort_if($this->roleName === 'super-admin' && ! auth()->user()->hasRole('super-admin'), 403);
@@ -48,6 +50,7 @@ class Index extends Component
     public function createPermission(): void
     {
         Gate::authorize('manage roles');
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
 
         $this->permissionName = str($this->permissionName)->lower()->trim()->squish()->toString();
 
@@ -64,6 +67,7 @@ class Index extends Component
     public function selectRole(int $roleId): void
     {
         Gate::authorize('manage roles');
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
 
         $role = Role::findOrFail($roleId);
         $this->assertCanManageRole($role);
@@ -75,6 +79,7 @@ class Index extends Component
     public function saveRolePermissions(): void
     {
         Gate::authorize('manage roles');
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
 
         $this->validate([
             'selectedRoleId' => ['required', 'exists:roles,id'],
@@ -92,6 +97,7 @@ class Index extends Component
     public function selectAllPermissions(): void
     {
         Gate::authorize('manage roles');
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
 
         $this->selectedPermissions = Permission::query()->pluck('name')->all();
     }
@@ -99,6 +105,7 @@ class Index extends Component
     public function clearPermissions(): void
     {
         Gate::authorize('manage roles');
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
 
         $this->selectedPermissions = [];
     }
@@ -111,6 +118,7 @@ class Index extends Component
     public function render()
     {
         Gate::authorize('manage roles');
+        abort_unless(auth()->user()->hasRole('super-admin'), 403);
 
         $selectedRole = $this->selectedRoleId
             ? Role::query()->with('permissions')->find($this->selectedRoleId)

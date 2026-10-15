@@ -12,12 +12,14 @@
     @if($errors->any())<p role="alert" class="text-sm text-red-700">{{ $errors->first() }}</p>@endif
     <p class="text-sm text-slate-500">{{ $records->total() }} {{ $category === 'claims' ? 'claims' : 'adjustment entries' }}</p>
     @php
-        $headers = [$category === 'claims' ? 'Claim / reference' : 'Document / cover', 'Cover'];
+        $headers = [$category === 'claims' ? 'Claim number' : 'Document / cover', 'Cover'];
+        if ($category === 'claims') $headers[] = 'Your reference';
         if ($broker) $headers[] = 'Cedant';
         $headers = array_merge($headers, [$category === 'claims' ? 'Insured' : 'Details', 'Date', 'Status', 'Currency', 'Amount', 'Action']);
-        $rows = $records->map(function ($record) use ($prefix, $broker) {
+        $rows = $records->map(function ($record) use ($prefix, $broker, $category) {
             $route = match ($record->record_kind) { 'claim' => 'rbs-claims.show', 'adjustment' => 'rbs-adjustments.show', default => 'submissions.show' };
             $row = [$record->claim_number ?: $record->reference, $record->cover];
+            if ($category === 'claims') $row[] = $record->reference;
             if ($broker) $row[] = $record->company_code;
             return array_merge($row, [str($record->label ?? '')->limit(100)->toString(), $record->display_date, $record->status, $record->currency, $record->amount !== null ? number_format($record->amount, 2) : '—', ['label' => 'View', 'url' => route($prefix.'.'.$route, $record->record_key)]]);
         });

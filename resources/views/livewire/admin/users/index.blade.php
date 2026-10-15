@@ -1,115 +1,40 @@
-<section class="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-    <div class="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 class="text-lg font-semibold tracking-tight text-slate-950">
-            {{ $editingUserId ? 'Edit user' : 'Create user' }}
-        </h2>
-        <p class="mt-2 text-sm leading-6 text-slate-600">
-            Create an account and choose which parts of the portal it can access.
-        </p>
-
-        @if (session('status'))
-            <div class="mt-5 rounded-md border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
-                {{ session('status') }}
-            </div>
-        @endif
-
-        <form wire:submit="save" class="mt-6 space-y-5">
-            <div>
-                <label for="name" class="block text-sm font-medium text-slate-700">Name</label>
-                <input id="name" type="text" wire:model="name" class="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-                @error('name') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label for="email" class="block text-sm font-medium text-slate-700">Email address</label>
-                <input id="email" type="email" wire:model="email" class="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-                @error('email') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
-                <input id="password" type="password" wire:model="password" class="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-                <p class="mt-2 text-xs text-slate-500">{{ $editingUserId ? 'Leave blank to keep the current password.' : 'At least 12 characters, including uppercase and lowercase letters, a number and a symbol.' }}</p>
-                @error('password') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-            </div>
-
-            <div>
-                <p class="block text-sm font-medium text-slate-700">Roles</p>
-                <div class="mt-3 grid gap-2 sm:grid-cols-2">
-                    @foreach ($roles as $role)
-                        <label class="flex items-center gap-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700">
-                            <input type="checkbox" wire:model.live="selectedRoles" value="{{ $role->name }}" class="rounded border-slate-300 text-brand-700 focus:ring-brand-600">
-                            {{ $role->name === 'client' ? 'Cedant' : str($role->name)->headline() }}
-                        </label>
-                    @endforeach
-                </div>
-                @error('selectedRoles') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-            </div>
-
-            @if(in_array('client', $selectedRoles, true))
-                <div>
-                    <label for="companyCode" class="block text-sm font-medium text-slate-700">Cedant company code <span class="text-red-600">*</span></label>
-                    <input id="companyCode" type="text" wire:model="companyCode" required maxlength="50" placeholder="Enter the cedant company code" class="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20">
-                    @error('companyCode')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
-                </div>
-            @endif
-
-            <div class="flex items-center gap-3">
-                <button type="submit" class="rounded-md bg-brand-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-800">
-                    {{ $editingUserId ? 'Update user' : 'Create user' }}
-                </button>
-
-                @if ($editingUserId)
-                    <button type="button" wire:click="resetForm" class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-                        Cancel
-                    </button>
-                @endif
-            </div>
-        </form>
-    </div>
-
-    <div class="rounded-lg border border-slate-200 bg-white shadow-sm">
-        <div class="border-b border-slate-200 px-6 py-4">
-            <h2 class="text-lg font-semibold tracking-tight text-slate-950">Users</h2>
-            <p class="mt-1 text-sm text-slate-500">Manage broker admins and cedant accounts.</p>
-        </div>
-
-        <div class="divide-y divide-slate-200">
-            @foreach ($users as $user)
-                <div wire:key="user-{{ $user->id }}" class="flex flex-col gap-4 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <p class="font-medium text-slate-950">{{ $user->name }}</p>
-                        <p class="text-sm text-slate-500">{{ $user->email }}</p>
-                        @if($user->company)<p class="mt-1 text-sm text-slate-500">{{ $user->company->CompanyName }} · {{ $user->company->CmpCode }}</p>@endif
-                        <div class="mt-2 flex flex-wrap gap-2">
-                            @forelse ($user->roles as $role)
-                                <span class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-800">{{ $role->name === 'client' ? 'Cedant' : str($role->name)->headline() }}</span>
-                            @empty
-                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">No role</span>
-                            @endforelse
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        @if(auth()->user()->hasRole('super-admin') || ! $user->hasRole('super-admin'))
-                        <button type="button" wire:click="edit({{ $user->id }})" class="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                            Edit
-                        </button>
-
-                        @if (auth()->id() !== $user->id)
-                            <button type="button" wire:click="delete({{ $user->id }})" wire:confirm="Delete this user?" class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100">
-                                Delete
-                            </button>
-                        @endif
-                        @else
-                            <span class="text-xs font-medium text-slate-500">Protected account</span>
-                        @endif
-                    </div>
-                </div>
-            @endforeach
-        </div>
-        <div class="border-t border-slate-200 px-6 py-4">{{ $users->links() }}</div>
-    </div>
+<section class="mx-auto max-w-7xl space-y-6">
+<div class="flex flex-wrap items-center justify-between gap-4"><div><p class="text-xs font-semibold uppercase tracking-widest text-brand-700">Account management</p><h1 class="mt-2 text-3xl font-semibold tracking-tight">Users</h1><p class="mt-2 text-sm text-slate-500">{{ auth()->user()->hasRole('super-admin') ? 'Manage broker staff, cedants and account access.' : 'Manage cedant registrations and account access.' }}</p></div>
+@if($tab === 'users')<button type="button" wire:click="create" class="rounded-xl bg-brand-700 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-800">Add user</button>@endif</div>
+@if(session('status'))<p role="status" class="rounded-xl border border-brand-200 bg-brand-50 p-4 text-sm text-brand-800">{{ session('status') }}</p>@endif
+@if($errors->any())<p role="alert" class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{{ $errors->first() }}</p>@endif
+@if(auth()->user()->hasRole('super-admin'))<nav aria-label="User management sections" class="flex gap-2 border-b border-slate-200"><a href="{{ route('admin.users.index') }}" @if($tab === 'users') aria-current="page" @endif class="border-b-2 px-4 py-3 text-sm font-semibold {{ $tab === 'users' ? 'border-brand-700 text-brand-700' : 'border-transparent text-slate-500' }}">User accounts</a><a href="{{ route('admin.users.index', ['tab' => 'limits']) }}" @if($tab === 'limits') aria-current="page" @endif class="border-b-2 px-4 py-3 text-sm font-semibold {{ $tab === 'limits' ? 'border-brand-700 text-brand-700' : 'border-transparent text-slate-500' }}">Company access limits</a></nav>@endif
+@if($tab === 'limits')
+<div class="rounded-2xl border border-slate-200 bg-white">
+<div class="flex flex-wrap items-center justify-between gap-4 border-b p-5"><div><h2 class="font-semibold">Company access limits</h2><p class="mt-1 text-sm text-slate-500">Approved users and live pending registrations reserve a place.</p></div><input type="search" wire:model.live.debounce.300ms="companySearch" aria-label="Search companies" maxlength="150" placeholder="Search company or code" class="rounded-xl border border-slate-200 p-3 text-sm"></div>
+<div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500"><tr><th class="px-5 py-4">Company</th><th class="px-5 py-4">Places used</th><th class="px-5 py-4">User limit</th></tr></thead><tbody class="divide-y divide-slate-100">
+@forelse($companies as $company)<tr><td class="px-5 py-4"><p class="font-semibold">{{ $company->CompanyName }}</p><p class="mt-1 text-xs text-slate-500">{{ $company->CmpCode }}</p></td><td class="px-5 py-4"><span class="rounded-full bg-slate-100 px-3 py-1.5 font-medium">{{ $company->reserved_user_count }} / {{ $company->portal_user_limit }}</span></td><td class="px-5 py-4"><form method="POST" action="{{ route('admin.companies.limit', $company->id) }}" class="flex items-center gap-2">@csrf @method('PATCH')<input type="number" name="portal_user_limit" aria-label="User limit for {{ $company->CompanyName }}" value="{{ $company->portal_user_limit }}" min="1" max="100" required class="w-20 rounded-lg border border-slate-200 p-2"><button class="rounded-lg bg-brand-50 px-3 py-2 font-semibold text-brand-700">Save</button></form></td></tr>@empty<tr><td colspan="3" class="p-10 text-center text-slate-500">No companies found.</td></tr>@endforelse
+</tbody></table></div><div class="border-t px-5 py-4">{{ $companies->withQueryString()->links() }}</div></div>
+@else
+<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">@foreach(['total' => 'All users', 'approved' => 'Approved', 'pending' => 'Awaiting approval', 'unverified' => 'Awaiting verification'] as $key => $label)<div class="rounded-2xl border border-slate-200 bg-white p-5"><p class="text-xs font-medium text-slate-500">{{ $label }}</p><p class="mt-3 text-3xl font-semibold tracking-tight">{{ number_format($stats[$key]) }}</p></div>@endforeach</div>
+<div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+<div class="flex flex-wrap items-center gap-3 border-b border-slate-200 p-5"><input type="search" wire:model.live.debounce.300ms="search" maxlength="150" aria-label="Search users" placeholder="Search name, email or company" class="min-w-0 flex-1 rounded-xl border border-slate-200 p-3 text-sm">
+<select wire:model.live="accessFilter" aria-label="Account access" class="rounded-xl border border-slate-200 p-3 text-sm"><option value="">All access states</option>@foreach(['pending' => 'Awaiting approval', 'approved' => 'Approved', 'suspended' => 'Suspended', 'rejected' => 'Rejected'] as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select>
+@if(auth()->user()->hasRole('super-admin'))<select wire:model.live="roleFilter" aria-label="Filter role" class="rounded-xl border border-slate-200 p-3 text-sm"><option value="">All roles</option><option value="admin">Broker admin</option><option value="client">Cedant</option><option value="super-admin">Superadmin</option></select>@endif
+</div>
+<div class="hidden overflow-x-auto md:block"><table class="w-full text-left text-sm"><thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>@foreach(['User', 'Role', 'Company / department', 'Access', 'Email', 'Actions'] as $heading)<th scope="col" class="px-5 py-4">{{ $heading }}</th>@endforeach</tr></thead><tbody class="divide-y divide-slate-100">
+@forelse($users as $user)<tr wire:key="desktop-user-{{ $user->id }}" class="align-top hover:bg-slate-50/60"><td class="px-5 py-5"><p class="font-semibold text-slate-900">{{ $user->name }}</p><p class="mt-1 text-xs text-slate-500">{{ $user->email }}</p></td><td class="px-5 py-5">@foreach($user->roles as $role)<span class="inline-block rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">{{ $role->name === 'client' ? 'Cedant' : ($role->name === 'admin' ? 'Broker admin' : 'Superadmin') }}</span>@endforeach</td><td class="px-5 py-5"><p>{{ $user->company?->CompanyName ?? $user->department?->name ?? '—' }}</p>@if($user->company)<p class="mt-1 text-xs text-slate-500">{{ $user->company->CmpCode }}</p>@endif</td><td class="px-5 py-5"><span @class(['inline-block rounded-full px-2.5 py-1 text-xs font-semibold', 'bg-emerald-50 text-emerald-700' => $user->access_status === 'approved', 'bg-amber-50 text-amber-700' => $user->access_status === 'pending', 'bg-slate-100 text-slate-600' => !in_array($user->access_status, ['approved', 'pending'])])>{{ str($user->access_status)->headline() }}</span></td><td class="px-5 py-5"><span class="text-xs {{ $user->hasVerifiedEmail() ? 'text-emerald-700' : 'text-amber-700' }}">{{ $user->hasVerifiedEmail() ? 'Verified' : 'Not verified' }}</span></td><td class="px-5 py-4">@include('livewire.admin.users.actions')</td></tr>@empty<tr><td colspan="6" class="p-10 text-center text-slate-500">No users match your filters.</td></tr>@endforelse
+</tbody></table></div>
+<div class="divide-y divide-slate-100 md:hidden">@forelse($users as $user)<article wire:key="mobile-user-{{ $user->id }}" class="space-y-4 p-5"><div><h2 class="font-semibold">{{ $user->name }}</h2><p class="mt-1 break-all text-sm text-slate-500">{{ $user->email }}</p></div><dl class="grid grid-cols-2 gap-3 text-sm"><div><dt class="text-xs text-slate-500">Role</dt><dd class="mt-1">{{ $user->hasRole('client') ? 'Cedant' : ($user->hasRole('super-admin') ? 'Superadmin' : 'Broker admin') }}</dd></div><div><dt class="text-xs text-slate-500">Access</dt><dd class="mt-1">{{ str($user->access_status)->headline() }}</dd></div><div><dt class="text-xs text-slate-500">Company / department</dt><dd class="mt-1">{{ $user->company?->CompanyName ?? $user->department?->name ?? '—' }}</dd></div><div><dt class="text-xs text-slate-500">Email</dt><dd class="mt-1">{{ $user->hasVerifiedEmail() ? 'Verified' : 'Not verified' }}</dd></div></dl>@include('livewire.admin.users.actions')</article>@empty<p class="p-8 text-center text-sm text-slate-500">No users match your filters.</p>@endforelse</div>
+<div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-4"><p class="text-xs text-slate-500">{{ number_format($users->total()) }} users</p>{{ $users->links() }}</div></div>
+@endif
+@if($showEditor)
+<dialog wire:ignore.self x-data x-init="$el.showModal()" x-on:cancel.prevent="$wire.resetForm()" aria-labelledby="user-editor-title" class="fixed inset-0 m-auto max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border-0 bg-white p-0 shadow-2xl backdrop:bg-slate-900/50">
+<div class="flex items-start justify-between gap-4 border-b p-6"><div><h2 id="user-editor-title" class="text-xl font-semibold">{{ $editingUserId ? 'Edit user' : 'Add user' }}</h2><p class="mt-1 text-sm text-slate-500">Set the account details and access.</p></div><button type="button" wire:click="resetForm" aria-label="Close user form" class="rounded-lg px-3 py-2 text-slate-500">✕</button></div>
+<form wire:submit="save" class="space-y-5 p-6">
+@if($errors->any())<p role="alert" class="rounded-lg bg-red-50 p-3 text-sm text-red-700">{{ $errors->first() }}</p>@endif
+<label class="block text-sm font-medium">Name<input type="text" wire:model="name" required maxlength="255" autocomplete="name" class="mt-2 block w-full rounded-xl border border-slate-200 p-3"></label>
+<label class="block text-sm font-medium">Email address<input type="email" wire:model="email" required maxlength="255" autocomplete="email" class="mt-2 block w-full rounded-xl border border-slate-200 p-3"></label>
+<label class="block text-sm font-medium">{{ $editingUserId ? 'New password (optional)' : 'Password' }}<input type="password" wire:model="password" autocomplete="new-password" @required(!$editingUserId) class="mt-2 block w-full rounded-xl border border-slate-200 p-3"></label><p class="text-xs text-slate-500">{{ $editingUserId ? 'Leave blank to keep the current password.' : 'At least 12 characters with uppercase, lowercase, a number and a symbol.' }}</p>
+<label class="block text-sm font-medium">Role<select wire:model.live="selectedRoles.0" required class="mt-2 block w-full rounded-xl border border-slate-200 p-3"><option value="">Choose role</option>@foreach($roles as $role)<option value="{{ $role->name }}">{{ $role->name === 'client' ? 'Cedant' : ($role->name === 'admin' ? 'Broker admin' : 'Superadmin') }}</option>@endforeach</select></label>
+@if(in_array('client', $selectedRoles, true))<label class="block text-sm font-medium">Company code<input wire:model="companyCode" required maxlength="50" class="mt-2 block w-full rounded-xl border border-slate-200 p-3"></label>@endif
+@if(in_array('admin', $selectedRoles, true))<label class="block text-sm font-medium">Department<select wire:model="departmentId" required class="mt-2 block w-full rounded-xl border border-slate-200 p-3"><option value="">Choose department</option>@foreach($departments as $department)<option value="{{ $department->id }}">{{ $department->name }}</option>@endforeach</select></label>@endif
+<div class="flex justify-end gap-3 border-t pt-5"><button type="button" wire:click="resetForm" class="rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600">Cancel</button><button type="submit" wire:loading.attr="disabled" wire:target="save" class="rounded-xl bg-brand-700 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">{{ $editingUserId ? 'Save changes' : 'Create user' }}</button></div>
+</form></dialog>
+@endif
 </section>
-
-

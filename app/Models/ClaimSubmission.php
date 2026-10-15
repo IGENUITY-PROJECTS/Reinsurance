@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -69,19 +70,28 @@ class ClaimSubmission extends Model
         return $this->belongsTo(Cover::class, 'CoverNo', 'CoverNo');
     }
 
-    // Relationship to the official claim; reference-linking workflow will be added later.
+    // Legacy cached-number relationship. Use matchingClaims() for reference and company matching.
     public function claim(): BelongsTo
     {
         return $this->belongsTo(Claim::class, 'ClaimNo', 'ClaimNo');
     }
 
+    public function matchingClaims(): Builder
+    {
+        $reference = trim((string) $this->OrigClaimNo);
+
+        return Claim::query()->where('CedCode', $this->company_code)
+            ->whereRaw('LTRIM(RTRIM(OrigClaimNo)) = ?', [$reference])
+            ->when($reference === '', fn ($q) => $q->whereRaw('1 = 0'));
+    }
+
     public function getRbsStatusAttribute(): string
     {
-        $claim = $this->claim;
-        if (! $claim || $claim->CedCode !== $this->company_code
-            || ($this->CoverNo && $claim->CoverNo !== $this->CoverNo)) {
+        $matches = $this->matchingClaims()->limit(2)->get();
+        if ($matches->count() !== 1) {
             return 'Submitted';
         }
+        $claim = $matches->first();
 
         return $claim->MStatusDesc ?: ($claim->MStatusCode ?: 'Not available');
     }

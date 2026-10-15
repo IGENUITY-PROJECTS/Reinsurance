@@ -27,7 +27,7 @@ tr { page-break-inside: avoid; } .number { text-align: right; } .muted { color: 
 @endforeach</tr>@endforeach</tbody></table>
 <table class="totals"><thead><tr><th>Currency</th><th>Documents</th><th>Amount</th><th>Settled</th><th>Outstanding</th></tr></thead><tbody>
 @foreach($totals as $total)<tr><td>{{ $total->CurrencyCode ?: 'Unspecified' }}</td><td>{{ $total->document_count }}</td><td class="number">{{ number_format($total->amount ?? 0, 2) }}</td><td class="number">{{ number_format($total->settled ?? 0, 2) }}</td><td class="number">{{ number_format($total->pending ?? 0, 2) }}</td></tr>@endforeach
-</tbody></table><p class="note muted">Balances as currently recorded. Reversed documents included.</p>
+</tbody></table><p class="note muted">Balances as currently recorded. Fully settled documents excluded.</p>
 <div class="footer">{{ config('branding.company_name') }} · {{ $report->period() }}</div>
 
 </body></html>

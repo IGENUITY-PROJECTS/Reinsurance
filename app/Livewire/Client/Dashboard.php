@@ -5,6 +5,7 @@ namespace App\Livewire\Client;
 use App\Models\ClaimSubmission;
 use App\Models\Cover;
 use App\Models\PremiumAdjustmentSubmission;
+use App\Queries\CedantModuleRecords;
 use Livewire\Component;
 
 class Dashboard extends Component
@@ -17,10 +18,10 @@ class Dashboard extends Component
         $adjustments = PremiumAdjustmentSubmission::where('company_code', $code)->when($code === '', fn ($q) => $q->whereRaw('1=0'));
         $counts = [
             'Covers' => Cover::where('CusCode', $code)->when($code === '', fn ($q) => $q->whereRaw('1=0'))->count(),
-            'Claim submissions' => (clone $claims)->count(),
-            'Premium adjustments' => (clone $adjustments)->count(),
+            'Claims' => app(CedantModuleRecords::class)->query('claims', $code)->count(),
+            'Premium adjustments' => app(CedantModuleRecords::class)->query('adjustments', $code)->count(),
         ];
-        $recent = (clone $claims)->with('claim')->latest()->orderByDesc('id')->take(3)->get()->map(fn ($r) => [
+        $recent = (clone $claims)->latest()->orderByDesc('id')->take(3)->get()->map(fn ($r) => [
             'id' => $r->OrigClaimNo, 'route_key' => $r->submission_reference, 'title' => $r->InsuredName ?: 'Claim',
             'type' => 'Claim', 'status' => $r->rbs_status, 'date' => $r->created_at->format('Y-m-d'),
         ])->concat((clone $adjustments)->latest()->orderByDesc('id')->take(3)->get()->map(fn ($r) => [

@@ -26,7 +26,7 @@ class StatementSummarySheet extends StatementValueBinder implements FromArray, W
             ['Cedant', $this->report->scopeLabel()], ['Period', $this->report->period()],
             ['Currency filter', $this->report->filters['currency'] ?? 'All currencies'],
             ['Search', $this->report->filters['q'] ?? 'None'], ['Generated', now()->format('Y-m-d H:i:s T')],
-            ['Balances as currently recorded. Reversed documents included.'], [],
+            ['Balances as currently recorded. Fully settled documents excluded.'], [],
             ['Currency', 'Documents', 'Amount', 'Settled', 'Outstanding'],
         ];
         foreach ($this->report->totals() as $total) {

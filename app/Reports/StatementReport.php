@@ -44,6 +44,8 @@ class StatementReport
     public function query(): Builder
     {
         $query = clone $this->base;
+        // A missing balance is unknown, not proof that a document was fully settled.
+        $query->where(fn ($q) => $q->where('PendingAmount', '<>', 0)->orWhereNull('PendingAmount'));
         if ($this->broker && filled($this->filters['company'] ?? null)) {
             $query->where('CedantCode', $this->filters['company']);
         }
@@ -120,7 +122,7 @@ class StatementReport
             array_push($headings, 'Claim reference', 'Cedant claim reference', 'Date of loss');
         }
 
-        return array_merge($headings, ['Currency', 'Amount', 'Settled', 'Outstanding', 'Reversed', 'Reversing document']);
+        return array_merge($headings, ['Currency', 'Amount', 'Settled', 'Outstanding']);
     }
 
     public function row($record): array
@@ -131,7 +133,6 @@ class StatementReport
             array_push($row, $record->ClaimReference, $record->ClaimRefReinsured, $record->DOL?->format('Y-m-d'));
         }
 
-        return array_merge($row, [$record->CurrencyCode, $record->MAmount, $record->SettledAmount, $record->PendingAmount,
-            $record->Reversed === null ? 'Not available' : ($record->Reversed ? 'Yes' : 'No'), $record->ReversingDoc]);
+        return array_merge($row, [$record->CurrencyCode, $record->MAmount, $record->SettledAmount, $record->PendingAmount]);
     }
 }

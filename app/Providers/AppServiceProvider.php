@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsurePortalApproved;
+use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -27,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Password::defaults(fn () => Password::min(12)->mixedCase()->numbers()->symbols()->rules(['regex:/[\p{S}\p{P}]/u']));
 
-        Livewire::addPersistentMiddleware([RoleMiddleware::class, PermissionMiddleware::class, RoleOrPermissionMiddleware::class]);
+        Livewire::addPersistentMiddleware([EnsureEmailIsVerified::class, EnsurePortalApproved::class, RoleMiddleware::class, PermissionMiddleware::class, RoleOrPermissionMiddleware::class]);
 
         Gate::before(function ($user, string $ability) {
             return $user->hasRole('super-admin') ? true : null;

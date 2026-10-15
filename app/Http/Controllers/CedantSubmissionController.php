@@ -88,7 +88,7 @@ class CedantSubmissionController extends Controller
         $rules = [
             '_submission_token' => ['required', 'ulid'],
             'CoverNo' => ['required', 'string', 'max:50', $coverRule],
-            'documents' => [$isClaim ? 'required' : 'nullable', 'array', 'max:10'],
+            'documents' => ['required', 'array', 'min:1', 'max:10'],
             'documents.*' => ['required', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,txt', 'extensions:pdf,jpg,jpeg,png,doc,docx,xls,xlsx,txt'],
         ];
         if ($isClaim) {
@@ -100,7 +100,7 @@ class CedantSubmissionController extends Controller
                 // 'ClaimAmt' => ['nullable', 'regex:/^\d{1,16}(\.\d{1,8})?$/'],
             ];
         } else {
-            $rules['details'] = ['required', 'string', 'max:10000'];
+            $rules['details'] = ['nullable', 'string', 'max:10000'];
         }
         $input = $request->validate($rules, [
             'CoverNo.exists' => 'Choose one of your company’s available covers.',
@@ -145,7 +145,7 @@ class CedantSubmissionController extends Controller
                         'ClaimCurrencyCode' => $cover->MCurrency,
                     ]);
                 } else {
-                    $submission->details = $input['details'];
+                    $submission->details = $input['details'] ?? null;
                 }
                 $submission->save();
                 foreach ($request->file('documents', []) as $file) {

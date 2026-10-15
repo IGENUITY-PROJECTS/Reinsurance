@@ -3,6 +3,8 @@
 namespace App\Notifications;
 
 use App\Models\FeedbackMessage;
+use App\Models\User;
+use App\Services\FeedbackRouting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -38,9 +40,18 @@ class FeedbackMessageReceived extends Notification implements ShouldQueue
             return false;
         }
 
-        return $this->toBroker
-            ? $notifiable->hasRole('admin')
-            : (int) $notifiable->id === (int) $message->conversation->created_by && $notifiable->hasRole('client');
+        $user = User::find($notifiable->id);
+        if (! $user || $user->access_status !== 'approved' || ! $user->hasVerifiedEmail()) {
+            return false;
+        }
+        if ($this->toBroker) {
+            $routing = app(FeedbackRouting::class);
+
+            return $routing->staff($message->conversation->department_id)->whereKey($user->id)->exists()
+                || ($user->hasRole('super-admin') && ! $routing->staff($message->conversation->department_id)->exists());
+        }
+
+        return (int) $user->id === (int) $message->conversation->created_by && $user->hasRole('client') && $user->company?->CmpCode === $message->conversation->company_code;
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -58,6 +69,7 @@ class FeedbackMessageReceived extends Notification implements ShouldQueue
                 ? ($message->author?->name ?? 'A cedant').' sent you a message.'
                 : 'Your broker has replied to your feedback.')
             ->line('Subject: '.$conversation->subject)
+            ->line('Topic: '.(FeedbackRouting::TOPICS[$conversation->topic] ?? 'General enquiry'))
             ->action('View conversation', route($prefix.'.help.show', ['reference' => $conversation->reference, 'page' => $page]))
             ->line('Sign in to read the message and reply.');
     }

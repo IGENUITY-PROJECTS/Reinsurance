@@ -38,7 +38,7 @@ New demo accounts use password `password`: `admin@example.com`, `superadmin@exam
 php artisan db:seed --class=ProductionRolesSeeder --force
 ```
 
-The default DatabaseSeeder also creates only roles and permissions, with no demo accounts or business records. RolesSeeder contains the shared role definitions. Provision the first administrator through an authorised process.
+The default DatabaseSeeder creates roles, permissions, one General department and initial topic routing, without accounts or business examples. RolesSeeder defines permissions; DepartmentsSeeder supplies the default department. Create the first real superadmin with `php artisan portal:superadmin` using hidden password prompts. See [access and department setup](docs/portal-access-and-departments.md).
 
 For deployment, configure APP_ENV=production, APP_DEBUG=false, HTTPS, real database/mail settings, and private document storage. Install PHP dependencies with `composer install --no-dev --optimize-autoloader`, build frontend assets with `npm ci` and `npm run build`, and apply reviewed migrations with a database backup. Keep `.env`, private documents and credentials out of Git.
 
@@ -58,8 +58,8 @@ Company codes, cover numbers and claim numbers retain their source meaning. Mirr
 
 ## Current scope
 
-Cedant records are restricted to the linked company. Claims are facultative, require supporting documents and use OrigClaimNo as the submitted/generated reference. Premium adjustments use CoverNo. Both sides have paginated general feedback conversations, independent of claims and adjustments. Official claim status comes from linked mirrored claims; portal status controls remain deferred. Profit commissions remain disabled.
+Cedant records are restricted to the linked company. Claims are facultative, require supporting documents and use OrigClaimNo as the submitted/generated reference. Premium adjustments use CoverNo. Both sides have paginated feedback conversations with department routing and optional statement/document context. Premium adjustment documents are required; details are optional. Official claim status comes from linked mirrored claims; portal status controls remain deferred. Profit commissions remain disabled.
 
-The RBS synchronisation process and automatic claim linking are still pending. A company-code registration check confirms a company exists; it does not verify that a registrant works for that company. Decide the invitation/approval process before public production registration.
+The RBS synchronisation process remains separate. Mirrored claims link to portal submissions by OrigClaimNo and company, without writing cached identifiers. Public registration requires email verification and broker approval before company access; each company defaults to five approved or live pending users. Only superadmin manages broker staff, departments and company limits. Emails use queued delivery. See [current migrations and setup](docs/portal-access-and-departments.md).
 
 The previous test suite and obsolete preview files were archived outside the repository during cleanup. Test files were removed at the project owner's request. Standard development dependencies remain available; production installs exclude them using `--no-dev`.

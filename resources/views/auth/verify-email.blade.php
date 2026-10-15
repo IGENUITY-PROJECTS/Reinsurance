@@ -11,7 +11,7 @@
 
     <h1 class="font-display font-600 text-2xl text-slate-900 tracking-tight mb-2">Check your email</h1>
     <p class="text-sm text-slate-500 leading-relaxed mb-6">
-        Thanks for registering. Please verify your email address by clicking the link we sent you before signing in.
+        Thanks for registering. Please verify your email address by clicking the link we sent you before accessing the portal.
     </p>
 
     @if (session('status') == 'verification-link-sent')

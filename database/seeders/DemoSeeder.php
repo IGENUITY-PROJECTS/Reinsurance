@@ -11,8 +11,10 @@ use App\Models\ClaimSubmission;
 use App\Models\Company;
 use App\Models\Cover;
 use App\Models\CoverReinsurer;
+use App\Models\Department;
 use App\Models\FeedbackConversation;
 use App\Models\FeedbackMessage;
+use App\Models\FeedbackTopicRoute;
 use App\Models\PremiumAdjustment;
 use App\Models\PremiumAdjustmentDocument;
 use App\Models\PremiumAdjustmentSubmission;
@@ -33,7 +35,7 @@ class DemoSeeder extends Seeder
             throw new RuntimeException('DemoSeeder is only allowed in local or testing environments.');
         }
         foreach ([
-            'users', 'roles', 'permissions', 'companies', 'covers', 'cover_reinsurers',
+            'departments', 'feedback_topic_routes', 'users', 'roles', 'permissions', 'companies', 'covers', 'cover_reinsurers',
             'claims', 'claim_submissions', 'claim_documents', 'claim_status_histories',
             'premium_adjustment_submissions', 'premium_adjustment_documents',
             'premium_adjustments', 'feedback_conversations', 'feedback_messages', 'cedant_premiums', 'cedant_claim_payables',
@@ -44,7 +46,13 @@ class DemoSeeder extends Seeder
         }
 
         DB::transaction(function () {
-            $this->callSilent(RolesSeeder::class);
+            $this->callSilent([RolesSeeder::class, DepartmentsSeeder::class]);
+            $general = Department::where('code', 'general')->firstOrFail();
+            $claimsTeam = Department::firstOrCreate(['code' => 'demo-claims'], ['name' => 'Demo Claims']);
+            $financeTeam = Department::firstOrCreate(['code' => 'demo-finance'], ['name' => 'Demo Finance']);
+            foreach (['claims' => $claimsTeam, 'premiums' => $financeTeam, 'adjustments' => $financeTeam] as $topic => $team) {
+                FeedbackTopicRoute::where('topic', $topic)->where('department_id', $general->id)->update(['department_id' => $team->id]);
+            }
             $companies = [];
             foreach ([
                 ['DEMO-C001', 'Demo Cedar Insurance', '100', '1'],
@@ -74,6 +82,17 @@ class DemoSeeder extends Seeder
             $admin = $this->user('admin@example.com', 'Demo Broker Admin', 'admin');
             $cedar = $this->user('client@example.com', 'Demo Cedar Cedant', 'client', $companies['DEMO-C001']);
             $lake = $this->user('client2@example.com', 'Demo Lake Cedant', 'client', $companies['DEMO-C002']);
+
+            $admin->forceFill(['department_id' => $general->id])->save();
+            $claimsAdmin = $this->user('claims.admin@example.com', 'Demo Claims Broker', 'admin');
+            $claimsAdmin->forceFill(['department_id' => $claimsTeam->id])->save();
+            $financeAdmin = $this->user('finance.admin@example.com', 'Demo Finance Broker', 'admin');
+            $financeAdmin->forceFill(['department_id' => $financeTeam->id])->save();
+            $this->user('colleague@example.com', 'Demo Cedar Colleague', 'client', $companies['DEMO-C001']);
+            $pending = $this->user('pending@example.com', 'Demo Pending Cedant', 'client', $companies['DEMO-C001']);
+            $pending->forceFill(['access_status' => 'pending', 'approved_at' => null, 'access_expires_at' => now()->addDays(7)])->save();
+            $unverified = $this->user('unverified@example.com', 'Demo Unverified Cedant', 'client', $companies['DEMO-C001']);
+            $unverified->forceFill(['email_verified_at' => null, 'access_status' => 'pending', 'approved_at' => null, 'access_expires_at' => now()->addDays(7)])->save();
 
             $covers = [];
             foreach (range(1, 4) as $i) {
@@ -244,10 +263,21 @@ class DemoSeeder extends Seeder
                     $conversation = (new FeedbackConversation)->forceFill(['reference' => $reference, 'subject' => $subject, 'created_by' => $owner->id, 'company_code' => $owner->company?->CmpCode]);
                     $conversation->save();
                 }
+                if (! $conversation->department_id) {
+                    $conversation->forceFill(['department_id' => $general->id, 'needs_assignment' => false])->save();
+                }
                 foreach ([[$owner->id, $question], [$admin->id, $answer]] as [$author, $message]) {
                     $this->put(FeedbackMessage::class, ['feedback_conversation_id' => $conversation->id, 'author_id' => $author, 'message' => $message], []);
                 }
             }
+            $statement = CedantPremium::where('DocumentNo', 'DEMO-DN1')->firstOrFail();
+            $conversation = FeedbackConversation::where('reference', 'DEMO-HELP-STMT')->first() ?? (new FeedbackConversation)->forceFill(['reference' => 'DEMO-HELP-STMT', 'subject' => 'Question about premium statement', 'created_by' => $cedar->id]);
+            $conversation->forceFill(['topic' => 'premiums', 'department_id' => $financeTeam->id, 'needs_assignment' => false,
+                'created_by' => $cedar->id, 'company_code' => $companies['DEMO-C001']->CmpCode, 'statement_kind' => 'premiums',
+                'statement_document_id' => $statement->id, 'statement_document_no' => $statement->DocumentNo,
+                'period_from' => '2026-09-01', 'period_to' => '2026-09-30'])->save();
+            $this->put(FeedbackMessage::class, ['feedback_conversation_id' => $conversation->id, 'author_id' => $cedar->id, 'message' => 'Please clarify the outstanding premium on this document.'], []);
+            $this->put(FeedbackMessage::class, ['feedback_conversation_id' => $conversation->id, 'author_id' => $financeAdmin->id, 'message' => 'We will review the payment allocation and reply here.'], []);
         });
         $this->command?->info('Demo data and feedback conversations seeded. New demo accounts use password; existing passwords are preserved.');
     }
@@ -265,6 +295,7 @@ class DemoSeeder extends Seeder
         $user = User::firstOrCreate(['email' => $email], [
             'name' => $name, 'password' => Hash::make('password'), 'email_verified_at' => now(),
         ]);
+        $user->forceFill(['email_verified_at' => now(), 'access_status' => 'approved', 'approved_at' => now(), 'access_expires_at' => null]);
         $user->company()->associate($company);
         $user->save();
         $user->assignRole($role);

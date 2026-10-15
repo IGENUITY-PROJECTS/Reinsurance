@@ -4,6 +4,7 @@ namespace App\Actions\Fortify;
 
 use App\Models\Company;
 use App\Models\User;
+use App\Services\PortalAccounts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -35,10 +36,11 @@ class CreateNewUser implements CreatesNewUsers
         ])->validate();
 
         return DB::transaction(function () use ($input) {
-            $company = Company::cedants()->where('CmpCode', $input['company_code'])->first();
+            $company = Company::cedants()->where('CmpCode', $input['company_code'])->lockForUpdate()->first();
             if (! $company) {
                 throw ValidationException::withMessages(['company_code' => 'This cedant company is no longer available.']);
             }
+            app(PortalAccounts::class)->assertCapacity($company);
             $user = new User([
                 'name' => $input['name'],
                 'email' => $input['email'],
@@ -46,6 +48,8 @@ class CreateNewUser implements CreatesNewUsers
             ]);
             // Public input cannot choose a role or another company's database ID.
             $user->company()->associate($company);
+            $user->access_status = 'pending';
+            $user->access_expires_at = now()->addDays(7);
             $user->save();
             $user->assignRole(Role::firstOrCreate(['name' => 'client', 'guard_name' => 'web']));
 

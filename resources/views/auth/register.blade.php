@@ -20,7 +20,7 @@
                         <path
                             d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 00-13.074.003z" />
                     </svg>
-                    <input id="name" type="text" name="name" value="{{ old('name') }}" placeholder="Jane Doe"
+                    <input id="name" type="text" name="name" value="{{ old('name') }}"
                         autocomplete="name" required
                         class="w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg outline-none transition-all {{ $errors->has('name') ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100' }}">
                 </div>
@@ -30,8 +30,7 @@
             {{-- Cedant company --}}
             <div class="mb-4">
                 <label for="company_code" class="block text-sm font-medium text-slate-700 mb-1.5">Company code <span class="text-red-500">*</span></label>
-                <input id="company_code" name="company_code" type="text" value="{{ old('company_code') }}" required maxlength="50"
-                    placeholder="Enter your cedant company code" aria-describedby="company_code_help"
+                <input id="company_code" name="company_code" type="text" value="{{ old('company_code') }}" required maxlength="50" aria-describedby="company_code_help"
                     class="w-full px-4 py-2.5 text-sm border rounded-lg outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 {{ $errors->has('company_code') ? 'border-red-400' : 'border-slate-200' }}">
                 <p id="company_code_help" class="mt-1.5 text-xs text-slate-500">Use the company code provided by your broker.</p>
                 @error('company_code') <p class="mt-1.5 text-xs text-red-600">{{ $message }}</p> @enderror
@@ -48,7 +47,7 @@
                         <path
                             d="M19 8.839l-7.77 3.885a2.75 2.75 0 01-2.46 0L1 8.839V14a2 2 0 002 2h14a2 2 0 002-2V8.839z" />
                     </svg>
-                    <input id="email" type="email" name="email" value="{{ old('email') }}" placeholder="you@company.com"
+                    <input id="email" type="email" name="email" value="{{ old('email') }}"
                         autocomplete="email" required
                         class="w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg outline-none transition-all {{ $errors->has('email') ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100' }}">
                 </div>
@@ -66,7 +65,7 @@
                             d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
                             clip-rule="evenodd" />
                     </svg>
-                    <input id="password" type="password" name="password" placeholder="Min. 12 characters"
+                    <input id="password" type="password" name="password"
                         autocomplete="new-password" required oninput="checkStrength(this.value)"
                         class="w-full pl-10 pr-11 py-2.5 text-sm border rounded-lg outline-none transition-all {{ $errors->has('password') ? 'border-red-400 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100' : 'border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100' }}">
                     <button type="button" onclick="togglePassword('password','eyeShow','eyeHide')"
@@ -113,8 +112,7 @@
                             d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
                             clip-rule="evenodd" />
                     </svg>
-                    <input id="password_confirmation" type="password" name="password_confirmation"
-                        placeholder="Repeat your password" autocomplete="new-password" required
+                    <input id="password_confirmation" type="password" name="password_confirmation" autocomplete="new-password" required
                         class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-lg outline-none transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-100">
                 </div>
             </div>

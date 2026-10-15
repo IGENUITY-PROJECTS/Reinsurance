@@ -40,7 +40,6 @@
                 <input
                     id="email" type="email" name="email"
                     value="{{ old('email') }}"
-                    placeholder="you@company.com"
                     autocomplete="email" autofocus required
                     class="w-full pl-10 pr-4 py-2.5 text-sm border rounded-lg outline-none transition-all
                            {{ $errors->has('email')
@@ -74,7 +73,6 @@
                 </svg>
                 <input
                     id="password" type="password" name="password"
-                    placeholder="••••••••"
                     autocomplete="current-password" required
                     class="w-full pl-10 pr-11 py-2.5 text-sm border rounded-lg outline-none transition-all
                            {{ $errors->has('password')

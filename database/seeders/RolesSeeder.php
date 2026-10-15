@@ -21,7 +21,7 @@ class RolesSeeder extends Seeder
         Role::firstOrCreate(['name' => 'client', 'guard_name' => 'web']);
         // Add defaults without removing permissions granted by the administrator.
         $super->givePermissionTo($permissions);
-        $admin->givePermissionTo('view admin dashboard');
+        $admin->givePermissionTo(['view admin dashboard', 'manage users']);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }
