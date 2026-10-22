@@ -8,7 +8,7 @@
         $headers = $broker ? ['Cedant', 'From', 'Subject', 'Topic / statement', 'Latest message', 'Updated', 'Action'] : ['Subject', 'Topic / statement', 'Latest message', 'Updated', 'Action'];
         $rows = $conversations->map(function ($conversation) use ($prefix, $broker) {
             $row = $broker ? [$conversation->company?->CompanyName ?? 'No company linked', $conversation->creator?->name ?? 'User', $conversation->subject] : [$conversation->subject];
-            return array_merge($row, [(\App\Services\FeedbackRouting::TOPICS[$conversation->topic] ?? 'General enquiry').($conversation->statement_document_no ? ' · '.$conversation->statement_document_no : '').($broker && $conversation->needs_assignment ? ' · Needs assignment' : ''), str($conversation->latestMessage?->message ?? '')->limit(100)->toString(), $conversation->updated_at?->format('Y-m-d H:i'), ['label' => 'View', 'url' => route($prefix.'.help.show', $conversation->reference)]]);
+            return array_merge($row, [(\App\Services\FeedbackRouting::TOPICS[$conversation->topic] ?? 'General enquiry').($conversation->statement_document_no ? ' · '.$conversation->statement_document_no : '').($broker && $conversation->needs_assignment ? ' · Needs assignment' : ''), str($conversation->latestMessage?->message ?? '')->limit(100)->toString(), $conversation->updated_at?->format('d M Y H:i'), ['label' => 'View', 'url' => route($prefix.'.help.show', $conversation->reference)]]);
         });
     @endphp
     <x-record-table :headers="$headers" :rows="$rows" />

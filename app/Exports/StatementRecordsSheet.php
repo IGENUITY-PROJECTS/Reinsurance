@@ -30,12 +30,15 @@ class StatementRecordsSheet extends StatementValueBinder implements FromQuery, W
 
     public function title(): string
     {
-        return 'Documents';
+        return $this->report->sectionLabel() === 'Ageing' ? 'Ageing' : 'Documents';
     }
 
     public function map($record): array
     {
         $row = $this->report->row($record);
+        if ($this->report->isAgeing()) {
+            return array_map(fn ($value, $i) => $i >= 3 && $value !== null ? (float) $value : $value, $row, array_keys($row));
+        }
         $row[1] = $record->DocumentDate ? Date::dateTimeToExcel($record->DocumentDate) : null;
         if ($this->report->isClaims()) {
             $row[8] = $record->DOL ? Date::dateTimeToExcel($record->DOL) : null;
@@ -53,7 +56,7 @@ class StatementRecordsSheet extends StatementValueBinder implements FromQuery, W
         return [AfterSheet::class => function (AfterSheet $event) {
             $sheet = $event->sheet->getDelegate();
             $lastColumn = Coordinate::stringFromColumnIndex(count($this->headings()));
-            $lastRow = $sheet->getHighestRow();
+            $lastRow = max(2, $sheet->getHighestRow());
             $sheet->freezePane('C2');
             $sheet->setAutoFilter('A1:'.$lastColumn.$lastRow);
             $sheet->getStyle('A1:'.$lastColumn.'1')->getFont()->setBold(true)->getColor()->setARGB('FFFFFFFF');
@@ -61,12 +64,15 @@ class StatementRecordsSheet extends StatementValueBinder implements FromQuery, W
             $sheet->getRowDimension(1)->setRowHeight(28);
             foreach ($this->headings() as $i => $heading) {
                 $column = Coordinate::stringFromColumnIndex($i + 1);
-                $sheet->getColumnDimension($column)->setWidth(in_array($heading, ['Cedant', 'Insured', 'Risk reference', 'Reinsurer']) ? 34 : 20);
-                if (in_array($heading, ['Amount', 'Settled', 'Outstanding'])) {
+                $sheet->getColumnDimension($column)->setWidth(in_array($heading, ['Cedant', 'Insured', 'Risk Reference', 'Reinsurer']) ? 34 : 20);
+                if (($this->report->isAgeing() && $i >= 3) || in_array($heading, ['Amount', 'Settled', 'Pending Amount', 'Functional Amount', 'Outstanding Functional Amount'])) {
                     $sheet->getStyle($column.'2:'.$column.$lastRow)->getNumberFormat()->setFormatCode('#,##0.00;[Red](#,##0.00)');
                 }
-                if (in_array($heading, ['Date', 'Date of loss'])) {
-                    $sheet->getStyle($column.'2:'.$column.$lastRow)->getNumberFormat()->setFormatCode('yyyy-mm-dd');
+                if ($heading === 'Exchange Rate') {
+                    $sheet->getStyle($column.'2:'.$column.$lastRow)->getNumberFormat()->setFormatCode('0.00000000');
+                }
+                if (in_array($heading, ['Date', 'Date Of Loss'])) {
+                    $sheet->getStyle($column.'2:'.$column.$lastRow)->getNumberFormat()->setFormatCode('dd mmm yyyy');
                 }
             }
         }];

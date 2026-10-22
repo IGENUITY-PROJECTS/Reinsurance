@@ -1,19 +1,19 @@
-@component($layout, ['title' => 'Policies / Covers'])
-<div class="space-y-6"><h1 class="text-2xl font-semibold">Policies / Covers</h1>
+@component($layout, ['title' => 'Covers'])
+<div class="space-y-6"><h1 class="text-2xl font-semibold">Covers</h1>
 <form method="GET" class="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
     <label class="text-sm font-medium">Company
         <select name="company" class="mt-2 block w-full rounded-lg border border-slate-300 p-3">
-            <option value="">{{ $broker ? 'All companies' : 'Your company' }}</option>
+            <option value="">{{ $broker ? 'All Companies' : 'Your company' }}</option>
             @foreach($companies as $company)
                 <option value="{{ $company->CusCode }}" @selected(request('company') === $company->CusCode)>{{ $company->CusCode }} — {{ $company->company_name ?: $company->CusCode }}</option>
             @endforeach
         </select>
     </label>
-    <label class="text-sm font-medium">Search covers
+    <label class="text-sm font-medium">Search Covers
         <input name="q" value="{{ request('q') }}" maxlength="150" placeholder="Cover, reference or insured" class="mt-2 block w-full rounded-lg border border-slate-300 p-3">
     </label>
     <div class="flex items-end gap-3"><button class="rounded-lg bg-brand-700 px-4 py-3 font-semibold text-white">Search</button><a href="{{ route($prefix.'.policies') }}" class="rounded-lg border px-4 py-3 text-sm">Reset</a></div>
 </form>
-<x-record-table :headers="['Cover', 'Cedant', 'Reference', 'Insured', 'Period', 'Status', 'Currency', 'Premium']" :rows="$covers->map(fn($r) => [['label' => $r->CoverNo, 'url' => route($prefix.'.policies.show', $r->CoverNo)], $r->CusName ?: $r->CusCode, $r->MRef, $r->InsName, $r->CVStartDate.' – '.$r->CVEndDate, $r->MStatus !== null ? 'Code '.$r->MStatus : 'Not available', $r->MCurrency, number_format($r->MPremium ?? 0, 2)])" />
+<x-record-table :headers="['Cover', 'Cedant', 'Reference', 'Insured', 'Period']" :rows="$covers->map(fn($r) => [['label' => $r->CoverNo, 'url' => route($prefix.'.policies.show', $r->CoverNo)], $r->CusName ?: $r->CusCode, $r->MRef, $r->InsName, \App\Support\DisplayDate::format($r->CVStartDate).' – '.\App\Support\DisplayDate::format($r->CVEndDate)])" />
 {{ $covers->links() }}</div>
 @endcomponent

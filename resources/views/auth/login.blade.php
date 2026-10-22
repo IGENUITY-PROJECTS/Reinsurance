@@ -8,6 +8,10 @@
         <p class="text-sm text-slate-500">Sign in to access your company portal.</p>
     </div>
 
+    @if(session('access_denied'))
+        <div role="alert" class="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">{{ session('access_denied') }}</div>
+    @endif
+
     {{-- Session status --}}
     @if (session('status'))
         <div class="flex gap-2.5 items-start bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg px-4 py-3 mb-5">

@@ -38,6 +38,14 @@ class PremiumAdjustment extends Model
         ];
     }
 
+    public function scopeWithInvoiceAmount(Builder $query): Builder
+    {
+        return $query->addSelect('premium_adjustments.*')->selectSub(
+            ProfitCommission::query()->selectRaw('MAX(InvoiceAmount)')->whereColumn('DocNo', 'premium_adjustments.DocumentNo')->havingRaw('COUNT(*) = 1'),
+            'invoice_amount'
+        );
+    }
+
     public function scopeForCompany(Builder $query, string $code): Builder
     {
         return $query->when($code === '', fn ($q) => $q->whereRaw('1 = 0'))

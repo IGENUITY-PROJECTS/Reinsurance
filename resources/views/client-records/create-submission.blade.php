@@ -48,8 +48,8 @@
                 }
             }
         }" class="space-y-3">
-            <h2 class="font-semibold">1. Select your cover</h2>
-            <label for="cover-search" class="block text-sm text-slate-600">Search by cover number, reference or insured name</label>
+            <h2 class="font-semibold">1. Select Your Cover</h2>
+            <label for="cover-search" class="block text-sm text-slate-600">Search By Cover Number, Reference Or Insured Name</label>
             <input id="cover-search" type="search" maxlength="150" x-model="searchQuery" @input.debounce.300ms="search"
                    class="block w-full rounded-lg border border-slate-300 p-3 text-sm" placeholder="Search your company's covers">
             <label for="CoverNo" class="block text-sm font-medium">Cover <span class="text-red-600">*</span></label>
@@ -71,36 +71,36 @@
         <section class="space-y-4">
             <h2 class="font-semibold">2. {{ $module === 'claims' ? 'Claim details' : 'Adjustment details' }}</h2>
             @if($module === 'claims')
-                <label class="block text-sm font-medium" for="OrigClaimNo">Your claim reference (optional)</label>
+                <label class="block text-sm font-medium" for="OrigClaimNo">Your Claim Reference (Optional)</label>
                 <input id="OrigClaimNo" name="OrigClaimNo" value="{{ old('OrigClaimNo') }}" maxlength="50" class="block w-full rounded-lg border border-slate-300 p-3">
                 <p class="text-xs text-slate-500">Leave blank and we’ll generate a reference for you.</p>
                 <div class="grid gap-4 sm:grid-cols-2">
-                    <label class="block text-sm font-medium">Date of loss <span class="text-red-600">*</span>
+                    <label class="block text-sm font-medium">Date Of Loss <span class="text-red-600">*</span>
                         <input name="DateLoss" type="date" value="{{ old('DateLoss') }}" max="{{ now()->format('Y-m-d') }}" required class="mt-2 block w-full rounded-lg border border-slate-300 p-3">
                     </label>
-                    <label class="block text-sm font-medium">Loss location (optional)
+                    <label class="block text-sm font-medium">Loss Location (Optional)
                         <input name="LossLocation" value="{{ old('LossLocation') }}" maxlength="250" class="mt-2 block w-full rounded-lg border border-slate-300 p-3">
                     </label>
                 </div>
-                <label class="block text-sm font-medium">Loss details <span class="text-red-600">*</span>
+                <label class="block text-sm font-medium">Loss Details <span class="text-red-600">*</span>
                     <textarea name="LossDetails" required maxlength="2000" rows="5" placeholder="Briefly describe what happened." class="mt-2 block w-full rounded-lg border border-slate-300 p-3">{{ old('LossDetails') }}</textarea>
                 </label>
                 {{-- Deferred: claim amounts are entered in RBS and displayed from the mirrored claim.
-                <label class="block text-sm font-medium">Estimated claim amount (optional)
+                <label class="block text-sm font-medium">Estimated Claim Amount (Optional)
                     <input name="ClaimAmt" inputmode="decimal" value="{{ old('ClaimAmt') }}" placeholder="0.00" class="mt-2 block w-full rounded-lg border border-slate-300 p-3">
                     <span class="mt-1 block text-xs font-normal text-slate-500">Use the currency of your selected cover.</span>
                 </label>
                 --}}
             @else
-                <label class="block text-sm font-medium">Adjustment details <span class="font-normal text-slate-500">(optional)</span>
+                <label class="block text-sm font-medium">Adjustment Details <span class="font-normal text-slate-500">(optional)</span>
                     <textarea name="details" maxlength="10000" rows="5" class="mt-2 block w-full rounded-lg border border-slate-300 p-3">{{ old('details') }}</textarea>
                 </label>
             @endif
         </section>
 
         <section class="space-y-3">
-            <h2 class="font-semibold">3. Supporting documents</h2>
-            <label for="documents" class="block text-sm font-medium">Supporting documents (required)</label>
+            <h2 class="font-semibold">3. Supporting Documents</h2>
+            <label for="documents" class="block text-sm font-medium">Supporting Documents (Required)</label>
             <input id="documents" name="documents[]" type="file" multiple required
                 accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt" class="block w-full rounded-lg border border-slate-300 p-3 text-sm">
             <p class="text-xs text-slate-500">PDF, images, Word, Excel or text files. Up to 10 files, 10 MB each.</p>

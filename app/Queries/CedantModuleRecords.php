@@ -41,7 +41,8 @@ class CedantModuleRecords
         // Cover ownership takes precedence; a missing cover can use the source cedant code.
         // Preserve every adjustment item; CoverNo is not a unique document/submission key.
         $mirrored = DB::table('premium_adjustments as a')->leftJoin('covers as c', 'c.CoverNo', '=', 'a.CoverNo')
-            ->selectRaw('CAST(a.id AS VARCHAR(50)) as record_key, a.DocumentNo as reference, a.CoverNo as cover, COALESCE(a.ItemDesc, a.ItemNo) as label, CASE WHEN c.id IS NOT NULL THEN c.CusCode ELSE a.CedantAccountNo END as company_code, '.$this->date('a.DocumentDate')." as display_date, 'Not available' as status, a.DocCurrency as currency, a.PremiumComputed as amount, 'adjustment' as record_kind, NULL as claim_number, NULL as portal_reference");
+            ->leftJoinSub(DB::table('profit_commissions')->select('DocNo')->selectRaw('MAX(InvoiceAmount) as invoice_amount')->groupBy('DocNo')->havingRaw('COUNT(*) = 1'), 'header', 'header.DocNo', '=', 'a.DocumentNo')
+            ->selectRaw('CAST(a.id AS VARCHAR(50)) as record_key, a.DocumentNo as reference, a.CoverNo as cover, COALESCE(a.ItemDesc, a.ItemNo) as label, CASE WHEN c.id IS NOT NULL THEN c.CusCode ELSE a.CedantAccountNo END as company_code, '.$this->date('a.DocumentDate')." as display_date, 'Not available' as status, a.DocCurrency as currency, header.invoice_amount as amount, 'adjustment' as record_kind, NULL as claim_number, NULL as portal_reference");
 
         return [$submitted, $mirrored];
     }

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Claim;
 use App\Models\ClaimDocument;
 use App\Models\ClaimSubmission;
+use App\Models\Company;
 use App\Models\Cover;
+use App\Models\CoverReinsurer;
 use App\Models\PremiumAdjustment;
 use App\Models\PremiumAdjustmentDocument;
 use App\Models\PremiumAdjustmentSubmission;
@@ -68,6 +70,9 @@ class CedantRecordsController extends Controller
         };
         $query = DB::query()->fromSub($base, 'submissions');
         $companies = (clone $query)->distinct()->orderBy('company_code')->pluck('company_code');
+        if ($this->broker()) {
+            $companies = Company::query()->pluck('CmpCode')->merge($companies)->unique()->sort()->values();
+        }
         if ($this->broker() && ! empty($filter['company'])) {
             $query->where('company_code', $filter['company']);
         }
@@ -124,6 +129,9 @@ class CedantRecordsController extends Controller
         ]);
         $query = app(CedantModuleRecords::class)->query($category, $this->broker() ? null : $code);
         $companies = (clone $query)->distinct()->orderBy('company_code')->pluck('company_code');
+        if ($this->broker()) {
+            $companies = Company::query()->pluck('CmpCode')->merge($companies)->unique()->sort()->values();
+        }
         if ($this->broker() && ! empty($filter['company'])) {
             $query->where('company_code', $filter['company']);
         }
@@ -153,7 +161,9 @@ class CedantRecordsController extends Controller
         $history = $isClaim ? $submission->statusHistories()->reorder()->with('changedBy')->orderByDesc('changed_at')->orderByDesc('id')->paginate(10, ['*'], 'history_page')->withQueryString() : null;
         $officialAdjustments = ! $isClaim ? $this->adjustments($request)->forCompany($submission->company_code)->where('CoverNo', $submission->CoverNo)->orderByDesc('DocumentDate')->orderBy('id')->paginate(10, ['*'], 'rbs_page')->withQueryString() : null;
 
-        return $this->screen('client-records.submission', compact('submission', 'isClaim', 'official', 'documents', 'history', 'officialAdjustments'));
+        $reinsurers = $isClaim ? $this->claimCoverReinsurers($official?->CoverNo ?: $submission->CoverNo, $submission->company_code) : null;
+
+        return $this->screen('client-records.submission', compact('submission', 'isClaim', 'official', 'documents', 'history', 'officialAdjustments', 'reinsurers'));
     }
 
     public function covers(Request $request)
@@ -162,6 +172,9 @@ class CedantRecordsController extends Controller
         $filter = $request->validate(['q' => 'nullable|string|max:150', 'company' => 'nullable|string|max:50']);
         $companies = (clone $query)->select('CusCode')->selectRaw('MAX(CusName) as company_name')
             ->whereNotNull('CusCode')->groupBy('CusCode')->orderBy('CusCode')->get();
+        if ($this->broker()) {
+            $companies = Company::query()->selectRaw('CmpCode as CusCode, CompanyName as company_name')->get()->concat($companies)->unique('CusCode')->sortBy('CusCode')->values();
+        }
         if (filled($filter['company'] ?? null)) {
             $query->where('CusCode', $filter['company']);
         }
@@ -192,7 +205,16 @@ class CedantRecordsController extends Controller
             ->when(trim((string) $claim->OrigClaimNo) === '', fn ($q) => $q->whereRaw('1 = 0'))->first();
         $documents = $submission?->documents()->orderByDesc('id')->paginate(10)->withQueryString();
 
-        return $this->screen('client-records.claim', compact('claim', 'submission', 'documents'));
+        $reinsurers = $this->claimCoverReinsurers($claim->CoverNo, $claim->CedCode);
+
+        return $this->screen('client-records.claim', compact('claim', 'submission', 'documents', 'reinsurers'));
+    }
+
+    private function claimCoverReinsurers(?string $coverNo, ?string $companyCode)
+    {
+        return CoverReinsurer::query()->where('CoverNo', $coverNo)->where('CedCode', $companyCode)
+            ->when(blank($coverNo) || blank($companyCode), fn ($query) => $query->whereRaw('1 = 0'))
+            ->orderBy('DetailID')->orderBy('id')->paginate(10, ['*'], 'reinsurers_page')->withQueryString();
     }
 
     public function officialAdjustment(Request $request, int $id)
@@ -204,7 +226,7 @@ class CedantRecordsController extends Controller
 
     private function adjustments(Request $request)
     {
-        $query = PremiumAdjustment::query();
+        $query = PremiumAdjustment::query()->withInvoiceAmount();
         if (! $this->broker()) {
             $query->forCompany($this->code($request));
         } elseif ($request->filled('company')) {

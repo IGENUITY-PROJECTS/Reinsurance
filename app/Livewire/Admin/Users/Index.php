@@ -265,7 +265,7 @@ class Index extends Component
         if ($super && in_array($this->roleFilter, ['client', 'admin', 'super-admin'], true)) {
             $query->role($this->roleFilter);
         }
-        $companies = $super && $this->tab === 'limits' ? Company::cedants()
+        $companies = $super && $this->tab === 'limits' ? Company::query()
             ->when(trim($this->companySearch) !== '', fn ($q) => $q->where(fn ($q) => $q->where('CompanyName', 'like', '%'.mb_substr(trim($this->companySearch), 0, 150).'%')->orWhere('CmpCode', 'like', '%'.mb_substr(trim($this->companySearch), 0, 150).'%')))
             ->withCount(['users as reserved_user_count' => fn ($q) => $q->where(fn ($q) => $q->where('access_status', 'approved')->orWhere(fn ($q) => $q->where('access_status', 'pending')->where('access_expires_at', '>', now())))])
             ->orderBy('CompanyName')->paginate(10, ['*'], 'companies_page') : null;

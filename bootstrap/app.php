@@ -5,6 +5,7 @@ use App\Http\Middleware\ThrottlePortalRegistration;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
@@ -25,5 +26,20 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function ($response, $exception, $request) {
+            if ($response->getStatusCode() !== 403 || $request->expectsJson()) {
+                return $response;
+            }
+            Auth::guard('web')->logout();
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+            $redirect = redirect()->route('login', [], 303);
+            if ($request->hasSession()) {
+                $redirect->with('access_denied', 'You do not have access to that page. Please sign in with the appropriate account.');
+            }
+
+            return $redirect;
+        });
     })->create();

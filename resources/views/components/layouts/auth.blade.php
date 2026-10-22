@@ -35,7 +35,7 @@
 
         {{-- Features --}}
         <ul class="relative space-y-3.5">
-            @foreach(['Policies & covers', 'Statements of account', 'Claims', 'Help & feedback'] as $feature)
+            @foreach(['Covers', 'Statements of account', 'Claims', 'Help & feedback'] as $feature)
             <li class="flex items-center gap-3 text-sm text-white/80">
                 <span class="flex items-center justify-center w-5 h-5 rounded-full bg-white/15 shrink-0">
                     <svg class="w-2.5 h-2.5 text-amber-300" viewBox="0 0 20 20" fill="currentColor">

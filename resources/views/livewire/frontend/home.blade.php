@@ -17,7 +17,7 @@
                 </div>
             </div>
             <div class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                @foreach(['Policies / Covers' => 'Find your cover information and policy documents.', 'Statement of Account' => 'Review your account activity and statements.', 'My Claims' => 'Keep track of your claims and their progress.', 'Premium Adjustments' => 'Submit your adjustment schedules and supporting documents.'] as $label => $description)
+                @foreach(['Covers' => 'Find your cover information and policy documents.', 'Statement of Account' => 'Review your account activity and statements.', 'My Claims' => 'Keep track of your claims and their progress.', 'Premium Adjustments' => 'Submit your adjustment schedules and supporting documents.'] as $label => $description)
                     <div class="rounded-xl bg-brand-50 p-4"><h2 class="text-sm font-semibold text-brand-900">{{ $label }}</h2><p class="mt-2 text-sm leading-6 text-slate-600">{{ $description }}</p></div>
                 @endforeach
             </div>

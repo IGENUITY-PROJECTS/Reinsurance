@@ -15,19 +15,28 @@ tr { page-break-inside: avoid; } .number { text-align: right; } .muted { color: 
 </style></head>
 <body>
 @if($logo)<img class="logo" src="{{ $logo }}" alt="Company logo">@endif
-<h1>{{ config('branding.company_name') }}</h1><h2>{{ $report->title() }}</h2>
+<h1>{{ $report->brandTitle() }}</h1><h2>{{ $report->title() }}</h2>
 <div class="meta"><p><strong>Cedant:</strong> {{ $report->scopeLabel() }}</p><p><strong>Period:</strong> {{ $report->period() }}</p>
 <p><strong>Currency:</strong> {{ $report->filters['currency'] ?? 'All currencies' }} · <strong>Documents:</strong> {{ number_format($records->count()) }}</p>
 @if(filled($report->filters['q'] ?? null))<p><strong>Search:</strong> {{ $report->filters['q'] }}</p>@endif
-<p class="muted">Generated {{ $generatedAt->format('Y-m-d H:i T') }}</p></div>
+<p class="muted">Generated {{ $generatedAt->format('d M Y H:i T') }}</p></div>
+@if(!$report->isAgeing() && $report->broughtForwardYear())
+<h2>Balance Brought Forward — {{ $report->broughtForwardYear() }}</h2>
+<table><thead><tr><th>Company Code</th><th>Currency</th><th>Pending Amount</th></tr></thead><tbody>
+@forelse($report->broughtForward() as $balance)<tr><td>{{ $balance->CedantCode }}</td><td>{{ $balance->CurrencyCode ?: 'Unspecified' }}</td><td>{{ number_format($balance->pending, 2) }}</td></tr>@empty<tr><td colspan="3">No outstanding prior-year balances.</td></tr>@endforelse
+</tbody></table><p class="note muted">Prior-year documents’ current outstanding balances.</p>
+@endif
+@include('reports.balance-summary')
+<h2>{{ $report->sectionLabel() }}</h2>@if($report->isAgeing())<p>Current outstanding balances aged from document date. Documents without a date or pending amount are excluded.</p>@endif
 <table><thead><tr>@foreach($report->headings() as $heading)<th>{{ $heading }}</th>@endforeach</tr></thead>
 <tbody>@foreach($records as $record)<tr>@foreach($report->row($record) as $i => $value)
 @php($numeric = $i >= $report->amountOffset())
-<td @class(['number' => $numeric])>{{ $numeric && $value !== null ? number_format($value, 2) : ($value ?? '—') }}</td>
+<td @class(['number' => $numeric])>{{ $numeric && $value !== null ? number_format($value, !$report->isAgeing() && $i === $report->exchangeRateOffset() ? 8 : 2) : ($value ?? '—') }}</td>
 @endforeach</tr>@endforeach</tbody></table>
-<table class="totals"><thead><tr><th>Currency</th><th>Documents</th><th>Amount</th><th>Settled</th><th>Outstanding</th></tr></thead><tbody>
-@foreach($totals as $total)<tr><td>{{ $total->CurrencyCode ?: 'Unspecified' }}</td><td>{{ $total->document_count }}</td><td class="number">{{ number_format($total->amount ?? 0, 2) }}</td><td class="number">{{ number_format($total->settled ?? 0, 2) }}</td><td class="number">{{ number_format($total->pending ?? 0, 2) }}</td></tr>@endforeach
-</tbody></table><p class="note muted">Balances as currently recorded. Fully settled documents excluded.</p>
-<div class="footer">{{ config('branding.company_name') }} · {{ $report->period() }}</div>
+<table class="totals"><thead><tr><th>Currency</th><th>Documents</th><th>Amount</th><th>Settled</th><th>Outstanding</th><th>Outstanding Functional Amount</th></tr></thead><tbody>
+@foreach($totals as $total)<tr><td>{{ $total->CurrencyCode ?: 'Unspecified' }}</td><td>{{ $total->document_count }}</td><td class="number">{{ number_format($total->amount ?? 0, 2) }}</td><td class="number">{{ number_format($total->settled ?? 0, 2) }}</td><td class="number">{{ number_format($total->pending ?? 0, 2) }}</td><td class="number">{{ $total->outstanding_functional === null ? '—' : number_format($total->outstanding_functional, 2) }}</td></tr>@endforeach
+</tbody></table><p class="note muted">Balances As Currently Recorded. {{ $report->includeSettled() ? 'All Documents Included.' : 'Fully Settled Documents Excluded.' }}</p>
+@unless($report->isAgeing())<p class="note">Outstanding Functional Amount = Pending Amount × Exchange Rate.</p>@endunless
+<div class="footer">{{ $report->brandTitle() }} · {{ $report->period() }}</div>
 
 </body></html>

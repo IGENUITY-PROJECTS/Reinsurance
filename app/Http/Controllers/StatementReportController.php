@@ -28,10 +28,10 @@ class StatementReportController extends Controller
         abort_unless(in_array($format, ['xlsx', 'pdf'], true), 404);
         $report = new StatementReport($request, true);
         $count = $report->query()->count();
-        if (! $count) {
+        if (! $count && $report->broughtForward()->isEmpty()) {
             throw ValidationException::withMessages(['report' => 'No records found for the selected period.']);
         }
-        $filename = 'cedant-'.$report->kind.'-'.$report->filters['from'].'-to-'.$report->filters['to'].'.'.$format;
+        $filename = 'cedant-'.$report->kind.'-'.strtolower($report->sectionLabel()).'-'.($report->isAgeing() ? $report->asAt()->format('Y-m-d') : $report->filters['from'].'-to-'.$report->filters['to']).'.'.$format;
         if ($format === 'xlsx') {
             return Excel::download(new StatementWorkbook($report), $filename);
         }

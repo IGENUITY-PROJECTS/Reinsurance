@@ -5,7 +5,7 @@ Schema and models only. The portal module remains disabled. No forms, routes, de
 | Source | Portal table | Model |
 | --- | --- | --- |
 | RERskCedHeader | profit_commissions | ProfitCommission |
-| Detail schema supplied alongside REPCRiskNotesPYears (exact source name to confirm) | profit_commission_details | ProfitCommissionDetail |
+| REPCRiskNotesPYears | profit_commission_details | ProfitCommissionDetail |
 
 All 108 header and 10 detail source columns retain their exact names and supplied string lengths. Dates supplied as VARCHAR remain strings; InstallmentDate remains an integer. Source flags remain integers. Source columns are nullable. Local id, last_synced_at and Laravel timestamps are added as metadata.
 

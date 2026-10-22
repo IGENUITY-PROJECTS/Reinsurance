@@ -56,6 +56,8 @@ For deployment, configure APP_ENV=production, APP_DEBUG=false, HTTPS, real datab
 | APCreditorsClaims | cedant_claim_payables |
 | APCreditorsPremiums | reinsurer_premium_payables |
 | REPremiumAdjustment | premium_adjustments |
+| RERskCedHeader | profit_commissions |
+| REPCRiskNotesPYears | profit_commission_details |
 
 Company codes, cover numbers and claim numbers retain their source meaning. Mirror tables allow independent sync order. Portal submissions and private documents are separate from mirrored records.
 

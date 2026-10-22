@@ -15,7 +15,7 @@ class UserAccessController extends Controller
         abort_unless($request->user()->hasRole('super-admin'), 403);
         $input = $request->validate(['portal_user_limit' => ['required', 'integer', 'min:1', 'max:100']]);
         DB::transaction(function () use ($id, $input, $accounts) {
-            $company = Company::cedants()->lockForUpdate()->findOrFail($id);
+            $company = Company::query()->lockForUpdate()->findOrFail($id);
             if ($accounts->reserved($company)->count() > $input['portal_user_limit']) {
                 throw ValidationException::withMessages(['portal_user_limit' => 'The limit cannot be lower than the current approved and live pending accounts.']);
             }

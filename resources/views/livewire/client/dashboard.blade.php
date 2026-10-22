@@ -10,7 +10,7 @@
         <p class="mt-2 text-sm text-slate-500">Choose where you would like to go.</p>
         <div class="mt-5 grid gap-4 sm:grid-cols-2">
             @foreach([
-                ['route' => 'client.policies', 'title' => 'My Policies / Covers', 'description' => 'Find your cover details and policy documents.', 'action' => 'View policies', 'icon' => 'M9 12l2 2 4-4 M12 3l8 4v5c0 5-8 9-8 9s-8-4-8-9V7l8-4'],
+                ['route' => 'client.policies', 'title' => 'Covers', 'description' => 'Find your cover details and policy documents.', 'action' => 'View Covers', 'icon' => 'M9 12l2 2 4-4 M12 3l8 4v5c0 5-8 9-8 9s-8-4-8-9V7l8-4'],
                 ['route' => 'client.statements', 'title' => 'Statement of Account', 'description' => 'Find your statements and account information.', 'action' => 'View statements', 'icon' => 'M6 3h9l3 3v15H6V3 M9 10h6 M9 14h6 M9 18h4'],
                 ['route' => 'client.claims', 'title' => 'My Claims', 'description' => 'Your place to submit a claim and follow its progress.', 'action' => 'View claims', 'icon' => 'M9 5H5v16h14V5h-4 M9 3h6v4H9V3 M8 12h8 M8 16h5'],
                 ['route' => 'client.adjustments', 'title' => 'Premium Adjustments', 'description' => 'Submit adjustment schedules and track their status.', 'action' => 'View adjustments', 'icon' => 'M4 6h16 M4 12h16 M4 18h16'],
