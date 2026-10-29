@@ -7,6 +7,7 @@ body { font-family: DejaVu Sans, sans-serif; color: #243b45; font-size: 8px; }
 h1 { font-size: 19px; margin: 0 0 5px; color: #175b56; } h2 { font-size: 12px; margin: 0 0 12px; }
 p { margin: 3px 0; } .meta { margin-bottom: 15px; } .logo { max-width: 100px; max-height: 45px; float: right; }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; } thead { display: table-header-group; }
+th.amount-heading { text-align: left !important; padding-left: 8px; }
 th { background: #175b56; color: white; text-align: left; padding: 7px 4px; font-size: 7px; }
 td { border-bottom: 1px solid #dde5e7; padding: 6px 4px; vertical-align: top; word-wrap: break-word; }
 tr { page-break-inside: avoid; } .number { text-align: right; } .muted { color: #637681; }
@@ -21,21 +22,21 @@ tr { page-break-inside: avoid; } .number { text-align: right; } .muted { color: 
 @if(filled($report->filters['q'] ?? null))<p><strong>Search:</strong> {{ $report->filters['q'] }}</p>@endif
 <p class="muted">Generated {{ $generatedAt->format('d M Y H:i T') }}</p></div>
 @if(!$report->isAgeing() && $report->broughtForwardYear())
-<h2>Balance Brought Forward — {{ $report->broughtForwardYear() }}</h2>
+<h2>Balance Brought Forward - {{ $report->broughtForwardYear() }}</h2>
 <table><thead><tr><th>Company Code</th><th>Currency</th><th>Pending Amount</th></tr></thead><tbody>
 @forelse($report->broughtForward() as $balance)<tr><td>{{ $balance->CedantCode }}</td><td>{{ $balance->CurrencyCode ?: 'Unspecified' }}</td><td>{{ number_format($balance->pending, 2) }}</td></tr>@empty<tr><td colspan="3">No outstanding prior-year balances.</td></tr>@endforelse
 </tbody></table><p class="note muted">Prior-year documents’ current outstanding balances.</p>
 @endif
 @include('reports.balance-summary')
 <h2>{{ $report->sectionLabel() }}</h2>@if($report->isAgeing())<p>Current outstanding balances aged from document date. Documents without a date or pending amount are excluded.</p>@endif
-<table><thead><tr>@foreach($report->headings() as $heading)<th>{{ $heading }}</th>@endforeach</tr></thead>
+<table><thead><tr>@foreach($report->headings() as $heading)<th align="left" @class(['amount-heading' => $loop->index >= $report->amountOffset()])>{{ $heading }}</th>@endforeach</tr></thead>
 <tbody>@foreach($records as $record)<tr>@foreach($report->row($record) as $i => $value)
 @php($numeric = $i >= $report->amountOffset())
-<td @class(['number' => $numeric])>{{ $numeric && $value !== null ? number_format($value, !$report->isAgeing() && $i === $report->exchangeRateOffset() ? 8 : 2) : ($value ?? '—') }}</td>
+<td @class(['number' => $numeric])>{{ $numeric && $value !== null ? number_format($value, !$report->isAgeing() && $i === $report->exchangeRateOffset() ? 8 : 2) : ($value ?? 'Not Available') }}</td>
 @endforeach</tr>@endforeach</tbody></table>
 <table class="totals"><thead><tr><th>Currency</th><th>Documents</th><th>Amount</th><th>Settled</th><th>Outstanding</th><th>Outstanding Functional Amount</th></tr></thead><tbody>
-@foreach($totals as $total)<tr><td>{{ $total->CurrencyCode ?: 'Unspecified' }}</td><td>{{ $total->document_count }}</td><td class="number">{{ number_format($total->amount ?? 0, 2) }}</td><td class="number">{{ number_format($total->settled ?? 0, 2) }}</td><td class="number">{{ number_format($total->pending ?? 0, 2) }}</td><td class="number">{{ $total->outstanding_functional === null ? '—' : number_format($total->outstanding_functional, 2) }}</td></tr>@endforeach
-</tbody></table><p class="note muted">Balances As Currently Recorded. {{ $report->includeSettled() ? 'All Documents Included.' : 'Fully Settled Documents Excluded.' }}</p>
+@foreach($totals as $total)<tr><td>{{ $total->CurrencyCode ?: 'Unspecified' }}</td><td>{{ $total->document_count }}</td><td class="number">{{ number_format($total->amount ?? 0, 2) }}</td><td class="number">{{ number_format($total->settled ?? 0, 2) }}</td><td class="number">{{ number_format($total->pending ?? 0, 2) }}</td><td class="number">{{ $total->outstanding_functional === null ? 'Not Available' : number_format($total->outstanding_functional, 2) }}</td></tr>@endforeach
+</tbody></table>
 @unless($report->isAgeing())<p class="note">Outstanding Functional Amount = Pending Amount × Exchange Rate.</p>@endunless
 <div class="footer">{{ $report->brandTitle() }} · {{ $report->period() }}</div>
 

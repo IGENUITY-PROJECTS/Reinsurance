@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountApprovalController;
 use App\Http\Controllers\CedantRecordsController;
 use App\Http\Controllers\CedantSubmissionController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FeedbackController;
@@ -27,6 +28,8 @@ foreach (['admin' => ['auth', 'verified', 'portal.approved', 'role:super-admin|a
     Route::middleware($middleware)->prefix($prefix)->name($prefix.'.')->group(function () use ($prefix) {
         Route::get('/dashboard', $prefix === 'admin' ? AdminDashboard::class : ClientDashboard::class)->name('dashboard');
         if ($prefix === 'admin') {
+            Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
+            Route::get('/companies/{company:CmpCode}', [CompanyController::class, 'show'])->name('companies.show');
             Route::get('/departments', [DepartmentController::class, 'index'])->middleware('role:super-admin')->name('departments.index');
             Route::post('/departments', [DepartmentController::class, 'store'])->middleware('role:super-admin')->name('departments.store');
             Route::post('/departments/routing', [DepartmentController::class, 'routing'])->middleware('role:super-admin')->name('departments.routing');

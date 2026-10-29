@@ -39,6 +39,7 @@ class StatementRecordsSheet extends StatementValueBinder implements FromQuery, W
         if ($this->report->isAgeing()) {
             return array_map(fn ($value, $i) => $i >= 3 && $value !== null ? (float) $value : $value, $row, array_keys($row));
         }
+        $row[array_search('Age Days', $this->headings(), true)] = (int) $record->age_days;
         $row[1] = $record->DocumentDate ? Date::dateTimeToExcel($record->DocumentDate) : null;
         if ($this->report->isClaims()) {
             $row[8] = $record->DOL ? Date::dateTimeToExcel($record->DOL) : null;
@@ -65,7 +66,7 @@ class StatementRecordsSheet extends StatementValueBinder implements FromQuery, W
             foreach ($this->headings() as $i => $heading) {
                 $column = Coordinate::stringFromColumnIndex($i + 1);
                 $sheet->getColumnDimension($column)->setWidth(in_array($heading, ['Cedant', 'Insured', 'Risk Reference', 'Reinsurer']) ? 34 : 20);
-                if (($this->report->isAgeing() && $i >= 3) || in_array($heading, ['Amount', 'Settled', 'Pending Amount', 'Functional Amount', 'Outstanding Functional Amount'])) {
+                if (($this->report->isAgeing() && $i >= 3) || in_array($heading, ['Amount', 'Settled', 'Pending Amount', 'Functional Amount', 'Outstanding Functional Amount', 'Running Balance'])) {
                     $sheet->getStyle($column.'2:'.$column.$lastRow)->getNumberFormat()->setFormatCode('#,##0.00;[Red](#,##0.00)');
                 }
                 if ($heading === 'Exchange Rate') {

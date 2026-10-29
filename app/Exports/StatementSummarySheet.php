@@ -22,11 +22,11 @@ class StatementSummarySheet extends StatementValueBinder implements FromArray, W
     public function array(): array
     {
         $rows = [
-            [$this->report->brandTitle()], [$this->report->title().' — '.$this->report->sectionLabel()],
+            [$this->report->brandTitle()], [$this->report->title().' - '.$this->report->sectionLabel()],
             ['Cedant', $this->report->scopeLabel()], ['Period', $this->report->period()],
             ['Currency filter', $this->report->filters['currency'] ?? 'All currencies'],
             ['Search', $this->report->filters['q'] ?? 'None'], ['Generated', now()->format('d M Y H:i:s T')],
-            [$this->report->includeSettled() ? 'Balances As Currently Recorded. All Documents Included.' : 'Balances As Currently Recorded. Fully Settled Documents Excluded.'], [],
+            [], [],
             ['Currency', 'Documents', 'Amount', 'Settled', 'Outstanding', 'Outstanding Functional Amount'],
         ];
         foreach ($this->report->totals() as $total) {

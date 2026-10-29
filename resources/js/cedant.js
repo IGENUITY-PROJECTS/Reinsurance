@@ -35,7 +35,7 @@ function setupFeedback() {
                 select.replaceChildren(new Option('No specific document', ''));
                 if (selected?.value) select.add(new Option(selected.text, selected.value, true, true));
                 documents.forEach((doc) => {
-                    if (String(doc.id) !== selected?.value) select.add(new Option(`${doc.DocumentNo || 'Document'} — ${doc.Insured || ''} (${doc.CurrencyCode || ''})`, doc.id));
+                    if (String(doc.id) !== selected?.value) select.add(new Option(`${doc.DocumentNo || 'Document'} - ${doc.Insured || ''} (${doc.CurrencyCode || ''})`, doc.id));
                 });
                 status.textContent = documents.length ? 'Showing up to 30 matches. Search to find older documents.' : 'No matching documents found.';
             } catch (error) {

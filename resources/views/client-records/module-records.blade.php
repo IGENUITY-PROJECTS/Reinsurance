@@ -23,7 +23,7 @@
             if ($broker) $row[] = $record->company_code;
             $row = array_merge($row, [str($record->label ?? '')->limit(100)->toString(), \App\Support\DisplayDate::format($record->display_date)]);
             if ($category === 'claims') $row[] = $record->status;
-            return array_merge($row, [$record->currency, $record->amount !== null ? number_format($record->amount, 2) : '—', ['label' => 'View', 'url' => route($prefix.'.'.$route, $record->record_key)]]);
+            return array_merge($row, [$record->currency, $record->amount !== null ? number_format($record->amount, 2) : 'Not Available', ['label' => 'View', 'url' => route($prefix.'.'.$route, $record->record_key)]]);
         });
     @endphp
     <x-record-table :headers="$headers" :rows="$rows" />

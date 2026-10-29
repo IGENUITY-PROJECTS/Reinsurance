@@ -62,8 +62,8 @@
             <p x-show="searchError" x-cloak x-text="searchError" role="alert" class="text-sm text-red-700"></p>
             <div x-show="chosen" x-cloak class="rounded-xl bg-brand-50 p-4 text-sm text-brand-900">
                 <p class="font-semibold" x-text="chosen?.InsName || 'Insured name not recorded'"></p>
-                <p class="mt-1" x-text="'Reference: ' + (chosen?.MRef || '—')"></p>
-                <p class="mt-1" x-text="'Currency: ' + (chosen?.MCurrency || '—')"></p>
+                <p class="mt-1" x-text="'Reference: ' + (chosen?.MRef || 'Not Available')"></p>
+                <p class="mt-1" x-text="'Currency: ' + (chosen?.MCurrency || 'Not Available')"></p>
             </div>
             @error('CoverNo')<p class="text-sm text-red-700">{{ $message }}</p>@enderror
         </section>

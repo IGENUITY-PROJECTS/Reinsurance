@@ -7,7 +7,7 @@
 ] as $heading => $fields)
 <section class="rounded-2xl border bg-white p-5 sm:p-6"><h2 class="text-lg font-semibold">{{ $heading }}</h2><dl class="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">@foreach($fields as $field => $label)
 @php($value = $field === 'invoice_amount' ? ($adjustment->invoice_amount !== null ? number_format($adjustment->invoice_amount, 2) : 'Not available') : $adjustment->$field)
-<div><dt class="text-sm text-slate-500">{{ $label }}</dt><dd class="mt-1 break-words font-medium">{{ $value instanceof \DateTimeInterface ? $value->format('d M Y H:i') : ($value ?? '—') }}</dd></div>
+<div><dt class="text-sm text-slate-500">{{ $label }}</dt><dd class="mt-1 break-words font-medium">{{ $value instanceof \DateTimeInterface ? $value->format('d M Y H:i') : ($value ?? 'Not Available') }}</dd></div>
 @endforeach</dl></section>@endforeach
 @if($adjustment->Remarks)<section class="rounded-2xl border bg-white p-6"><h2 class="font-semibold">Remarks</h2><p class="mt-3 whitespace-pre-line">{{ $adjustment->Remarks }}</p></section>@endif
 </div>@endcomponent

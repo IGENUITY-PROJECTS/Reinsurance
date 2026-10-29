@@ -29,3 +29,9 @@ Ageing groups the same mirrors by company and currency as of the selected date, 
 ## Row-count comparison update
 
 Normal statements now include fully settled rows (PendingAmount = 0), per the latest request to compare the 81 visible rows with 126 source rows. Ageing remains outstanding-only. Date, company, currency and search filters still apply, and exports still include all matching pages. This supersedes earlier outstanding-only descriptions for normal statements.
+
+## Risk-Note Rules — 29 October 2026
+
+The latest rules supersede earlier all-document/settled-row settings. Both premium and claims payable statements, ageing, totals, brought-forward balances and current-year summaries require DocumentTypeCode exactly D0C1 (zero, not letter O), PendingAmount strictly greater than 0.05, Reversed exactly 0, and a non-null DocumentDate through the selected As At day. Null document types, balances or reversal flags do not qualify. Currency/company/search filters and normal-statement From/To filters remain available. Ageing ignores From/To and includes eligible older documents through As At. The full As At day is included even for timestamps.
+
+Normal statements also show Age Days, Age Bucket and Running Balance. Calendar-day age uses DocumentDate. Running balances sum eligible displayed documents separately per CedantCode/CurrencyCode in DocumentDate, DocumentNo, local-id order; local id breaks ties without dropping duplicate document numbers. The window is evaluated before pagination and export chunking. Running balance does not separately add the brought-forward summary, avoiding double counting. Existing balances remain current synced values rather than reconstructed historical payment balances.

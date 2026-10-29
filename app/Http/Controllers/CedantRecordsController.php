@@ -169,7 +169,7 @@ class CedantRecordsController extends Controller
     public function covers(Request $request)
     {
         $query = $this->owned(Cover::query(), 'CusCode', $this->code($request));
-        $filter = $request->validate(['q' => 'nullable|string|max:150', 'company' => 'nullable|string|max:50']);
+        $filter = $request->validate(['q' => 'nullable|string|max:150', 'company' => 'nullable|string|max:50', 'reinsurance_type' => 'nullable|in:FC,TC']);
         $companies = (clone $query)->select('CusCode')->selectRaw('MAX(CusName) as company_name')
             ->whereNotNull('CusCode')->groupBy('CusCode')->orderBy('CusCode')->get();
         if ($this->broker()) {
@@ -177,6 +177,9 @@ class CedantRecordsController extends Controller
         }
         if (filled($filter['company'] ?? null)) {
             $query->where('CusCode', $filter['company']);
+        }
+        if (filled($filter['reinsurance_type'] ?? null)) {
+            $query->where('RETypeCode', $filter['reinsurance_type']);
         }
         if (! empty($filter['q'])) {
             $term = '%'.$filter['q'].'%';

@@ -45,10 +45,7 @@ class FeedbackMessageReceived extends Notification implements ShouldQueue
             return false;
         }
         if ($this->toBroker) {
-            $routing = app(FeedbackRouting::class);
-
-            return $routing->staff($message->conversation->department_id)->whereKey($user->id)->exists()
-                || ($user->hasRole('super-admin') && ! $routing->staff($message->conversation->department_id)->exists());
+            return app(FeedbackRouting::class)->staff()->whereKey($user->id)->exists();
         }
 
         return (int) $user->id === (int) $message->conversation->created_by && $user->hasRole('client') && $user->company?->CmpCode === $message->conversation->company_code;
@@ -66,7 +63,7 @@ class FeedbackMessageReceived extends Notification implements ShouldQueue
             ->subject($heading.' - '.config('branding.company_name'))
             ->greeting('Hello '.$notifiable->name.',')
             ->line($this->toBroker
-                ? ($message->author?->name ?? 'A cedant').' sent you a message.'
+                ? ($message->author?->name ?? 'A portal user').' sent a feedback message.'
                 : 'Your broker has replied to your feedback.')
             ->line('Subject: '.$conversation->subject)
             ->line('Topic: '.(FeedbackRouting::TOPICS[$conversation->topic] ?? 'General enquiry'))

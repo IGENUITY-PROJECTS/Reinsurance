@@ -36,7 +36,7 @@
     </main>
     <footer class="mx-auto flex max-w-6xl flex-wrap justify-between gap-3 px-4 py-6 text-xs text-slate-500 sm:px-6">
         <span>&copy; {{ date('Y') }} {{ config('branding.company_name') }}</span>
-        <span>Cedant portal</span>
+        <nav aria-label="Footer Navigation" class="flex flex-wrap gap-4"><a href="{{ route('client.policies') }}" class="hover:text-brand-700">Covers</a><a href="{{ route('client.statements') }}" class="hover:text-brand-700">Statements</a><a href="{{ route('client.help') }}" class="hover:text-brand-700">Help &amp; Feedback</a></nav>
     </footer>
     @livewireScripts
 </body>

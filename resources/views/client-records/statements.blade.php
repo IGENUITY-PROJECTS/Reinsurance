@@ -1,6 +1,6 @@
 @component($layout, ['title' => 'Statements'])
 <div class="space-y-6">
-    <div><h1 class="text-2xl font-semibold">Statements</h1><p class="mt-1 text-sm text-slate-500">{{ $report->brandTitle() }} · {{ $report->title() }}</p><p class="mt-2 text-xs text-slate-500">{{ $report->isAgeing() ? 'Fully Settled Documents Excluded.' : 'All Documents Included, Including Fully Settled Records.' }}</p></div>
+    <div><h1 class="text-2xl font-semibold">Statements</h1><p class="mt-1 text-sm text-slate-500">{{ $report->brandTitle() }} · {{ $report->title() }}</p></div>
     <div class="flex flex-wrap gap-3">
         @foreach($report->kinds() as $kind => $label)
             <a class="rounded-xl border bg-white px-4 py-3 {{ $report->kind === $kind ? 'border-brand-700 font-semibold text-brand-700' : 'text-slate-600' }}" href="{{ route($prefix.'.statements', array_merge(request()->only(['from', 'to', 'company', 'currency', 'section', 'as_at']), ['kind' => $kind])) }}">{{ $label }}</a>
@@ -12,7 +12,7 @@
         <input type="hidden" name="kind" value="{{ $report->kind }}">
         <label class="text-sm font-medium">From Date (Statement)<input type="date" name="from" value="{{ old('from', request('from')) }}" class="mt-2 block w-full rounded-lg border border-slate-300 p-3"></label>
         <label class="text-sm font-medium">To Date (Statement)<input type="date" name="to" value="{{ old('to', request('to')) }}" class="mt-2 block w-full rounded-lg border border-slate-300 p-3"></label>
-        <label class="text-sm font-medium">Ageing As At<input type="date" name="as_at" value="{{ request('as_at', now()->format('Y-m-d')) }}" class="mt-2 block w-full rounded-lg border border-slate-300 p-3"></label>
+        <label class="text-sm font-medium">As At Date<input type="date" name="as_at" value="{{ request('as_at', now()->format('Y-m-d')) }}" class="mt-2 block w-full rounded-lg border border-slate-300 p-3"></label>
         @if($broker)
             <label class="text-sm font-medium">Cedant<select name="company" class="mt-2 block w-full rounded-lg border border-slate-300 p-3"><option value="">All Cedants</option>@foreach($companies as $company)<option value="{{ $company->CedantCode }}" @selected(request('company') === $company->CedantCode)>{{ $company->company_name ?: $company->CedantCode }} ({{ $company->CedantCode }})</option>@endforeach</select></label>
         @endif
@@ -36,15 +36,15 @@
         </div>
     </div>
     @if(!$report->isAgeing() && !filled($report->filters['from'] ?? null))<p class="text-sm text-slate-500">Select a start and end date to download a statement.</p>@endif
-    @if($report->isAgeing())<p class="text-sm text-slate-500">{{ $report->period() }} · Current outstanding balances aged from document date. Documents without a date or pending amount are excluded.</p>@endif
-    @unless($report->isAgeing())<p class="text-xs text-slate-500">Outstanding Functional Amount = Pending Amount × Exchange Rate. Missing Values Are Shown As —.</p>@endunless
+    @if($report->isAgeing())<p class="text-sm text-slate-500">{{ $report->period() }} · Outstanding Risk Notes Aged From Document Date. Only Non-Reversed Balances Above 0.05 Are Included.</p>@endif
+    @unless($report->isAgeing())<p class="text-xs text-slate-500">Outstanding Functional Amount = Pending Amount × Exchange Rate. Missing Values Are Shown As Not Available.</p>@endunless
     @unless($report->isAgeing())@include('reports.brought-forward')@endunless
     @include('reports.balance-summary')
     <h2 class="text-lg font-semibold">{{ $report->sectionLabel() }}</h2>
     @if($records->total() === 0)
         <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500" role="status">No records found for the selected period.</div>
     @else
-        <x-record-table :headers="($broker || !$report->supportsFeedbackContext()) ? $report->headings() : array_merge($report->headings(), ['Help'])" :rows="$records->map(function ($record) use ($report, $broker) { $row = $report->row($record); $offset = $report->amountOffset(); foreach (range($offset, count($row) - 1) as $i) { $row[$i] = $row[$i] === null ? '—' : number_format($row[$i], !$report->isAgeing() && $i === $report->exchangeRateOffset() ? 8 : 2); } if (!$broker && $report->supportsFeedbackContext()) $row[] = ['label' => 'Ask a question', 'url' => route('client.help.create', array_merge(request()->only(['from', 'to', 'currency', 'q']), ['topic' => $report->kind, 'statement_document_id' => $record->id]))]; return $row; })" />
+        <x-record-table :headers="($broker || !$report->supportsFeedbackContext()) ? $report->headings() : array_merge($report->headings(), ['Help'])" :rows="$records->map(function ($record) use ($report, $broker) { $row = $report->row($record); $offset = $report->amountOffset(); foreach (range($offset, count($row) - 1) as $i) { $row[$i] = $row[$i] === null ? 'Not Available' : number_format($row[$i], !$report->isAgeing() && $i === $report->exchangeRateOffset() ? 8 : 2); } if (!$broker && $report->supportsFeedbackContext()) $row[] = ['label' => 'Ask a question', 'url' => route('client.help.create', array_merge(request()->only(['from', 'to', 'currency', 'q']), ['topic' => $report->kind, 'statement_document_id' => $record->id]))]; return $row; })" />
         {{ $records->links() }}
 
     @endif

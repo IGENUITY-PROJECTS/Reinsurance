@@ -84,3 +84,7 @@ php artisan queue:work --tries=3
 ```
 
 Restart existing workers after deploying new code (`php artisan queue:restart`), and monitor failed jobs (`php artisan queue:failed`). Successful enqueueing is not proof of SMTP delivery. No live email has been sent during the assistant's fake-notification verification. No new packages are required.
+
+## Shared Broker Feedback — 29 October 2026
+
+All approved, email-verified admin and super-admin users receive new feedback and follow-up/reply notifications regardless of department, including staff without a department or with an inactive department. The author is excluded from their own email. All broker staff can view/reply across the shared inbox; dashboard counts match. Broker replies also notify the conversation's original cedant. Other cedants cannot view or receive another user's conversation. Delivery-time checks revalidate approval, verification and broker role. Department/topic labels remain organisational and changing a label no longer resends the conversation. No migration is required; existing conversations use this policy immediately. Previously queued notifications are subject to the new eligibility checks but do not gain recipients that were never originally queued.

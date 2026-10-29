@@ -28,11 +28,8 @@ class FeedbackController extends Controller
         $query = FeedbackConversation::query();
         if (! $this->broker($request)) {
             $query->where('created_by', $request->user()->id)->where('company_code', $request->user()->company?->CmpCode);
-        } elseif (! $request->user()->hasRole('super-admin')) {
-            abort_unless($request->user()->hasRole('admin'), 403);
-            $id = $request->user()->department_id;
-            $query->where('department_id', $id)->when(! $id, fn ($q) => $q->whereRaw('1 = 0'))
-                ->whereHas('department', fn ($q) => $q->where('is_active', true));
+        } else {
+            abort_unless($request->user()->hasAnyRole(['admin', 'super-admin']), 403);
         }
 
         return $query;
@@ -147,7 +144,7 @@ class FeedbackController extends Controller
     public function show(Request $request, string $reference)
     {
         $conversation = $this->query($request)->with(['creator', 'company', 'department'])->where('reference', $reference)->firstOrFail();
-        // Refresh the attention flag when staff membership changes, without exposing messages to other departments.
+        // Refresh the attention flag when staff membership changes, using the shared broker recipient pool.
         if ($this->broker($request)) {
             app(FeedbackRouting::class)->brokerRecipients($conversation);
         }
@@ -165,38 +162,31 @@ class FeedbackController extends Controller
         $conversation->department_id = $input['department_id'];
         $conversation->needs_assignment = ! app(FeedbackRouting::class)->staff($conversation->department_id)->exists();
         $conversation->save();
-        $latest = $conversation->messages()->latest('id')->first();
-        if ($latest && (int) $latest->author_id === (int) $conversation->created_by) {
-            $this->notifyFeedback($conversation, $latest, false);
-        }
 
         return back()->with('status', 'Conversation department updated.');
     }
 
     private function notifyFeedback(FeedbackConversation $conversation, FeedbackMessage $message, bool $brokerReply, bool $newConversation = false): void
     {
-        $send = function (User $recipient) use ($message, $brokerReply, $newConversation) {
+        $send = function (User $recipient, bool $toBroker) use ($message, $newConversation) {
             if (! filter_var($recipient->email, FILTER_VALIDATE_EMAIL) || (int) $recipient->id === (int) $message->author_id) {
                 return;
             }
             try {
-                $recipient->notify(new FeedbackMessageReceived($message->id, ! $brokerReply, $newConversation));
+                $recipient->notify(new FeedbackMessageReceived($message->id, $toBroker, $newConversation));
             } catch (Throwable $error) {
                 report($error);
             }
         };
         try {
-            if ($brokerReply) {
-                if ($creator = $conversation->creator) {
-                    $send($creator);
-                }
-            } else {
-                app(FeedbackRouting::class)->brokerRecipients($conversation)->chunkById(100, function ($recipients) use ($send) {
-                    foreach ($recipients as $recipient) {
-                        $send($recipient);
-                    }
-                });
+            if ($brokerReply && ($creator = $conversation->creator)) {
+                $send($creator, false);
             }
+            app(FeedbackRouting::class)->brokerRecipients($conversation)->chunkById(100, function ($recipients) use ($send) {
+                foreach ($recipients as $recipient) {
+                    $send($recipient, true);
+                }
+            });
         } catch (Throwable $error) {
             report($error);
         }

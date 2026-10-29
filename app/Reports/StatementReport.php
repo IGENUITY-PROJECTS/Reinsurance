@@ -54,13 +54,26 @@ class StatementReport
         }
     }
 
+    private function eligibleQuery(): Builder
+    {
+        return (clone $this->base)->where('DocumentTypeCode', 'D0C1')
+            ->where('PendingAmount', '>', '0.05')->where('Reversed', 0)
+            ->where('DocumentDate', '<', $this->asAt()->addDay()->format('Y-m-d').' 00:00:00');
+    }
+
+    private function ageDaysSql(): string
+    {
+        return match ($this->base->getModel()->getConnection()->getDriverName()) {
+            'sqlsrv' => 'DATEDIFF(DAY, DocumentDate, ?)',
+            'mysql', 'mariadb' => 'DATEDIFF(?, DocumentDate)',
+            'pgsql' => '(CAST(? AS date) - CAST(DocumentDate AS date))',
+            default => 'CAST(julianday(?) - julianday(date(DocumentDate)) AS INTEGER)',
+        };
+    }
+
     public function query(): Builder
     {
-        $query = clone $this->base;
-        // A missing balance is unknown, not proof that a document was fully settled.
-        if ($this->isAgeing()) {
-            $query->where(fn ($q) => $q->where('PendingAmount', '<>', 0)->orWhereNull('PendingAmount'));
-        }
+        $query = $this->eligibleQuery();
         if ($this->broker && filled($this->filters['company'] ?? null)) {
             $query->where('CedantCode', $this->filters['company']);
         }
@@ -89,7 +102,9 @@ class StatementReport
         }
 
         if (! $this->isAgeing()) {
-            $query->select($this->base->getModel()->getTable().'.*')->selectRaw($this->outstandingFunctionalSql().' as outstanding_functional');
+            $query->select($this->base->getModel()->getTable().'.*')->selectRaw($this->outstandingFunctionalSql().' as outstanding_functional')
+                ->selectRaw($this->ageDaysSql().' as age_days', [$this->asAt()->format('Y-m-d')])
+                ->selectRaw('SUM(CAST(PendingAmount AS DECIMAL(24,8))) OVER (PARTITION BY CedantCode, CurrencyCode ORDER BY DocumentDate, DocumentNo, id ROWS UNBOUNDED PRECEDING) as running_balance');
         }
 
         return $query;
@@ -101,7 +116,7 @@ class StatementReport
             return $this->ageingQuery();
         }
 
-        return $this->query()->orderBy('CedantCode')->orderBy('CurrencyCode')->orderBy('DocumentDate')->orderBy('DocumentNo')->orderBy('id');
+        return $this->query()->orderBy('CedantName')->orderBy('CurrencyCode')->orderBy('DocumentDate')->orderBy('DocumentNo')->orderBy('id');
     }
 
     public function totals(): Collection
@@ -126,7 +141,7 @@ class StatementReport
         if ($year === null) {
             return collect();
         }
-        $query = clone $this->base;
+        $query = $this->eligibleQuery();
         $query->where('DocumentDate', '>=', $year.'-01-01 00:00:00')
             ->where('DocumentDate', '<', ($year + 1).'-01-01 00:00:00')
             ->where('PendingAmount', '<>', 0);
@@ -157,7 +172,7 @@ class StatementReport
 
     public function includeSettled(): bool
     {
-        return ! $this->isAgeing();
+        return false;
     }
 
     public function outstandingFunctionalSql(): string
@@ -177,7 +192,7 @@ class StatementReport
         }
         $year = CarbonImmutable::parse($this->filters['from'])->year;
         $end = min($this->filters['to'], $year.'-12-31');
-        $query = clone $this->base;
+        $query = $this->eligibleQuery();
         $query->where('DocumentDate', '>=', ($year - 1).'-01-01 00:00:00')->where('DocumentDate', '<', CarbonImmutable::parse($end)->addDay()->format('Y-m-d').' 00:00:00')->where('PendingAmount', '<>', 0);
         if ($this->broker && filled($this->filters['company'] ?? null)) {
             $query->where('CedantCode', $this->filters['company']);
@@ -229,7 +244,7 @@ class StatementReport
 
     public function amountOffset(): int
     {
-        return $this->isAgeing() ? 3 : count($this->headings()) - 6;
+        return $this->isAgeing() ? 3 : count($this->headings()) - 7;
     }
 
     public function supportsFeedbackContext(): bool
@@ -249,7 +264,7 @@ class StatementReport
 
     public function ageingQuery(): Builder
     {
-        $query = $this->query()->select('CedantCode', 'CurrencyCode')->selectRaw('MAX(CedantName) as CedantName');
+        $query = $this->query()->select('CedantCode', 'CedantName', 'CurrencyCode');
         foreach ([[0, 30], [31, 60], [61, 90], [91, 180], [181, 365], [366, null]] as $i => [$min,$max]) {
             $upper = $this->asAt()->subDays($min)->addDay()->format('Y-m-d').' 00:00:00';
             $condition = 'DocumentDate < ?';
@@ -261,7 +276,7 @@ class StatementReport
             $query->selectRaw('SUM(CASE WHEN '.$condition.' THEN CAST(PendingAmount AS DECIMAL(24,8)) ELSE 0 END) as bucket_'.$i, $bindings);
         }
 
-        return $query->selectRaw('SUM(CAST(PendingAmount AS DECIMAL(24,8))) as balance')->groupBy('CedantCode', 'CurrencyCode')->orderBy('CedantCode')->orderBy('CurrencyCode');
+        return $query->selectRaw('SUM(CAST(PendingAmount AS DECIMAL(24,8))) as balance')->groupBy('CedantCode', 'CedantName', 'CurrencyCode')->orderBy('CedantName')->orderBy('CurrencyCode');
     }
 
     public function sectionLabel(): string
@@ -296,7 +311,7 @@ class StatementReport
             return 'As at '.$this->asAt()->format('d M Y');
         }
 
-        return filled($this->filters['from'] ?? null) ? DisplayDate::format($this->filters['from']).' to '.DisplayDate::format($this->filters['to']) : 'All dates';
+        return filled($this->filters['from'] ?? null) ? DisplayDate::format($this->filters['from']).' to '.DisplayDate::format($this->filters['to']).' · As At '.$this->asAt()->format('d M Y') : 'As At '.$this->asAt()->format('d M Y');
     }
 
     public function headings(): array
@@ -313,7 +328,9 @@ class StatementReport
             array_push($headings, 'Reinsurer code', 'Reinsurer', 'Cedant document');
         }
 
-        return array_merge($headings, ['Currency', 'Amount', 'Settled', 'Pending Amount', 'Exchange Rate', 'Functional Amount', 'Outstanding Functional Amount']);
+        array_push($headings, 'Age Days', 'Age Bucket');
+
+        return array_merge($headings, ['Currency', 'Amount', 'Settled', 'Pending Amount', 'Exchange Rate', 'Functional Amount', 'Outstanding Functional Amount', 'Running Balance']);
     }
 
     public function row($record): array
@@ -331,6 +348,12 @@ class StatementReport
             array_push($row, $record->ReinsureCode, $record->ReinsurerName, $record->CedantDoc);
         }
 
-        return array_merge($row, [$record->CurrencyCode, $record->MAmount, $record->SettledAmount, $record->PendingAmount, $record->ExchangeRate, $record->FunctionalAmount, $record->outstanding_functional]);
+        $days = (int) $record->age_days;
+        $bucket = match (true) {
+            $days <= 30 => '0-30', $days <= 60 => '31-60', $days <= 90 => '61-90', $days <= 180 => '91-180', $days <= 365 => '181-365', default => '365+'
+        };
+        array_push($row, $days, $bucket);
+
+        return array_merge($row, [$record->CurrencyCode, $record->MAmount, $record->SettledAmount, $record->PendingAmount, $record->ExchangeRate, $record->FunctionalAmount, $record->outstanding_functional, $record->running_balance]);
     }
 }

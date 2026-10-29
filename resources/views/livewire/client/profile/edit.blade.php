@@ -9,16 +9,15 @@
     </div>
     @if($company)
         @foreach([
-            'Company details' => ['CompanyName' => 'Company name', 'CmpCode' => 'Company code', 'ShortName' => 'Short name', 'CmpTypeDesc' => 'Company type', 'CmpSubTypeDesc' => 'Company category', 'StartDate' => 'Start date'],
-            'Contact details' => ['EmailAdd' => 'Company email', 'Website' => 'Website', 'PostalAdd' => 'Postal address', 'MTown' => 'Town / city', 'MFax' => 'Fax'],
-            'Location' => ['CountryName' => 'Country', 'CountryCode' => 'Country code', 'MktZoneDesc' => 'Market zone', 'MktZoneCode' => 'Market zone code', 'ZoneName' => 'Zone', 'ZoneCode' => 'Zone code'],
-            'Account details' => ['NatAcNo' => 'Account number', 'NatAcName' => 'Account name', 'PinNo' => 'Tax PIN'],
+            'Company details' => ['CompanyName' => 'Company name', 'CmpCode' => 'Company code', 'ShortName' => 'Short name', 'CmpSubTypeDesc' => 'Company category'],
+            'Contact details' => ['EmailAdd' => 'Company email', 'Website' => 'Website', 'PostalAdd' => 'Postal address', 'MTown' => 'Town / city'],
+            'Location' => ['CountryName' => 'Country', 'CountryCode' => 'Country code', 'MktZoneDesc' => 'Market zone'],
         ] as $heading => $fields)
             <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
                 <h2 class="text-lg font-semibold">{{ $heading }}</h2>
                 <dl class="mt-5 grid gap-5 sm:grid-cols-2">
                     @foreach($fields as $field => $label)
-                        <div class="min-w-0"><dt class="text-sm text-slate-500">{{ $label }}</dt><dd class="mt-1 whitespace-pre-line break-words font-medium">{{ filled($company->$field) ? $company->$field : '—' }}</dd></div>
+                        <div class="min-w-0"><dt class="text-sm text-slate-500">{{ $label }}</dt><dd class="mt-1 whitespace-pre-line break-words font-medium">{{ filled($company->$field) ? $company->$field : 'Not Available' }}</dd></div>
                     @endforeach
                 </dl>
             </div>

@@ -17,7 +17,7 @@ class Dashboard extends Component
             'claims' => ['Claims', app(CedantModuleRecords::class)->query('claims')->count()],
             'adjustments' => ['Premium adjustments', app(CedantModuleRecords::class)->query('adjustments')->count()],
             'policies' => ['Covers', Cover::count()],
-            'help' => ['Help & Feedback', FeedbackConversation::query()->when(! auth()->user()->hasRole('super-admin'), fn ($q) => $q->where('department_id', auth()->user()->department_id)->when(! auth()->user()->department_id, fn ($q) => $q->whereRaw('1 = 0'))->whereHas('department', fn ($q) => $q->where('is_active', true)))->count()],
+            'help' => ['Help & Feedback', FeedbackConversation::count()],
         ];
         // Portal review counts deferred.
         // $pending = ClaimSubmission::whereIn('portal_status', ['submitted', 'under_review'])->count()

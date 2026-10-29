@@ -11,7 +11,7 @@ class DisplayDate
         }
         $value = trim((string) $value);
         if ($value === '') {
-            return '—';
+            return 'Not Available';
         }
         foreach (['!Ymd', '!Y-m-d', '!Y-m-d H:i:s', '!Y-m-d H:i:s.u'] as $format) {
             $date = \DateTimeImmutable::createFromFormat($format, $value);

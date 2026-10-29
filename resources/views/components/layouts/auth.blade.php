@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('branding.company_name') }} — {{ $title ?? 'Authentication' }}</title>
+    <title>{{ config('branding.company_name') }} - {{ $title ?? 'Authentication' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 </head>
 <body class="min-h-screen flex font-body antialiased bg-slate-50">
 
-    {{-- Left brand panel — hidden on mobile --}}
+    {{-- Left brand panel - hidden on mobile --}}
     <aside class="hidden lg:flex lg:w-[42%] min-h-screen flex-col p-10 bg-gradient-to-br from-brand-900 via-brand-700 to-brand-500 text-white relative overflow-hidden">
 
         {{-- Subtle geometric decoration --}}
