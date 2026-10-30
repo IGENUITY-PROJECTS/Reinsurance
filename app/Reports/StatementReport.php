@@ -319,7 +319,7 @@ class StatementReport
         if ($this->isAgeing()) {
             return ['Cedant Code', 'Cedant', 'Currency', '0–30', '31–60', '61–90', '91–180', '181–365', '365+', 'Balance'];
         }
-        $headings = ['Document', 'Date', 'Cedant Code', 'Cedant', 'Insured', 'Risk Reference'];
+        $headings = ['Document', 'Date', 'Cedant Code', 'Cedant', 'Insured', 'Risk Reference', 'Account Type', 'Risk Details'];
         if ($this->isClaims()) {
             array_push($headings, 'Claim Reference', 'Cedant Claim Reference', 'Date Of Loss');
         }
@@ -339,7 +339,7 @@ class StatementReport
             return [$record->CedantCode, $record->CedantName, $record->CurrencyCode, $record->bucket_0, $record->bucket_1, $record->bucket_2, $record->bucket_3, $record->bucket_4, $record->bucket_5, $record->balance];
         }
         $row = [$record->DocumentNo, $record->DocumentDate?->format('d M Y'), $record->CedantCode, $record->CedantName,
-            $record->Insured, $record->RiskNoteRef];
+            $record->Insured, $record->RiskNoteRef, $record->AccountType, $record->RiskDetails];
         if ($this->isClaims()) {
             array_push($row, $record->ClaimReference, $record->ClaimRefReinsured, $record->DOL?->format('d M Y'));
         }

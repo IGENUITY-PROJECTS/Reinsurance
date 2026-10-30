@@ -42,7 +42,7 @@ class StatementRecordsSheet extends StatementValueBinder implements FromQuery, W
         $row[array_search('Age Days', $this->headings(), true)] = (int) $record->age_days;
         $row[1] = $record->DocumentDate ? Date::dateTimeToExcel($record->DocumentDate) : null;
         if ($this->report->isClaims()) {
-            $row[8] = $record->DOL ? Date::dateTimeToExcel($record->DOL) : null;
+            $row[array_search('Date Of Loss', $this->headings(), true)] = $record->DOL ? Date::dateTimeToExcel($record->DOL) : null;
         }
 
         for ($i = $this->report->amountOffset(); $i < count($row); $i++) {
@@ -65,9 +65,12 @@ class StatementRecordsSheet extends StatementValueBinder implements FromQuery, W
             $sheet->getRowDimension(1)->setRowHeight(28);
             foreach ($this->headings() as $i => $heading) {
                 $column = Coordinate::stringFromColumnIndex($i + 1);
-                $sheet->getColumnDimension($column)->setWidth(in_array($heading, ['Cedant', 'Insured', 'Risk Reference', 'Reinsurer']) ? 34 : 20);
+                $sheet->getColumnDimension($column)->setWidth(in_array($heading, ['Cedant', 'Insured', 'Risk Reference', 'Reinsurer', 'Account Type', 'Risk Details']) ? 34 : 20);
                 if (($this->report->isAgeing() && $i >= 3) || in_array($heading, ['Amount', 'Settled', 'Pending Amount', 'Functional Amount', 'Outstanding Functional Amount', 'Running Balance'])) {
                     $sheet->getStyle($column.'2:'.$column.$lastRow)->getNumberFormat()->setFormatCode('#,##0.00;[Red](#,##0.00)');
+                }
+                if (in_array($heading, ['Account Type', 'Risk Details'], true)) {
+                    $sheet->getStyle($column.'2:'.$column.$lastRow)->getAlignment()->setWrapText(true);
                 }
                 if ($heading === 'Exchange Rate') {
                     $sheet->getStyle($column.'2:'.$column.$lastRow)->getNumberFormat()->setFormatCode('0.00000000');
